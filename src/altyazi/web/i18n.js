@@ -1,6 +1,6 @@
 window.APP_MESSAGES = {
   tr: {
-    nav: { download: 'Altyazı indir', files: 'İndirilenler', sites: 'Kaynaklar', settings: 'Ayarlar', skip: 'Ana içeriğe geç', main: 'Ana menü' },
+    nav: { download: 'Altyazı indir', files: 'İndirilenler', sites: 'Kaynaklar', guide: "Kılavuz", settings: 'Ayarlar', skip: 'Ana içeriğe geç', main: 'Ana menü' },
     home: {
       title: 'Altyazı indir', sub: 'Bir video veya oynatma listesi bağlantısı yapıştırın.',
       label: 'Video bağlantısı', placeholder: 'https://', paste: 'Panodan yapıştır', fetch: 'Getir', loading: 'Video bilgileri alınıyor…',
@@ -74,10 +74,68 @@ window.APP_MESSAGES = {
       network: 'Programın iç sunucusuna ulaşılamadı.',
     },
     themes: { ocean: 'Okyanus', emerald: 'Zümrüt', amethyst: 'Ametist', rose: 'Gül', amber: 'Kehribar', graphite: 'Grafit', midnight: 'Gece mavisi', forest: 'Orman', wine: 'Şarap' },
+    guide: {
+      title: "Kılavuz", sub: "Programın nasıl kullanılacağını adım adım anlatır.",
+      sections: [
+        { title: "Tek videonun altyazısını indirme", items: [
+          "Videonun bağlantısını tarayıcıdan kopyalayın.",
+          "Altyazı indir sayfasında bağlantıyı kutuya yapıştırın ya da Panodan yapıştır düğmesine basın.",
+          "Getir düğmesine basın; program videonun adını ve altyazı dillerini listeler.",
+          "Üstten bir biçim seçin, ardından istediğiniz dilin satırındaki İndir düğmesine basın.",
+          "Dosya indirme klasörüne kaydedilir. Aynı adda bir dosya varsa üzerine yazılmaz, yeni dosyaya ayrı bir ad verilir.",
+        ] },
+        { title: "Altyazı sekmeleri", items: [
+          "Altyazılar: videoyu yükleyenin eklediği gerçek altyazılar. Varsa en doğru sonuç bunlardır.",
+          "Otomatik: kaynak sitenin konuşmadan kendiliğinden ürettiği altyazılar. Hatalı sözcükler içerebilir.",
+          "Çeviriler: kaynak sitenin başka dillere yaptığı otomatik çeviriler.",
+          "Çift dil: iki dili tek dosyada birleştirir.",
+          "Dil listesi uzunsa Dil ara kutusuna dilin adını yazın. Sekmelerdeki sayılar o sekmede kaç dil olduğunu gösterir.",
+        ] },
+        { title: "Dosya biçimleri", items: [
+          "SRT: en yaygın altyazı biçimi. Video oynatıcıların ve televizyonların çoğu açar.",
+          "VTT: internet sayfalarındaki oynatıcılar için kullanılan biçim.",
+          "TXT: zaman bilgisi olmadan yalnızca konuşma metni. Okumak veya çevirmek için uygundur.",
+          "TXT + zaman: her satırın başında zamanı yazan düz metin.",
+          "Özgün: kaynak sitenin verdiği dosya, hiç dönüştürülmeden.",
+        ] },
+        { title: "Çift dilli altyazı", items: [
+          "Çift dil sekmesini açın.",
+          "Üst satır dilini ve alt satır dilini seçin. İki dil birbirinden farklı olmalıdır.",
+          "Çift dilli indir düğmesine basın. Her satırda önce üst dil, altında alt dil görünür.",
+          "Çift dilli altyazı Özgün biçimde indirilemez; başka bir biçim seçin.",
+        ] },
+        { title: "Oynatma listesi ve kanal", items: [
+          "Bir oynatma listesinin veya kanalın bağlantısını yapıştırıp Getir düğmesine basın. En fazla 500 video listelenir.",
+          "İndirmek istediğiniz videoları işaretleyin ya da Tümünü seç düğmesini kullanın.",
+          "Dil kodunu yazın (örneğin tr, ku veya en) ve biçimi seçin.",
+          "Gerçek altyazısı olmayan videolar için otomatik altyazı kullanılsın istiyorsanız ilgili kutuyu işaretleyin.",
+          "Seçilenleri indir düğmesine basın. İşlem sürerken İptal et ile durdurabilirsiniz.",
+          "İşlem bitince kaç dosyanın kaydedildiği ve hangi videoların alınamadığı gösterilir.",
+        ] },
+        { title: "İndirilenler sayfası", items: [
+          "İndirme klasöründeki altyazı dosyalarını listeler. Video gibi başka dosyalar burada görünmez ve silinmez.",
+          "Klasörde göster: dosyayı Windows klasöründe açar.",
+          "Listeden kaldır: dosyayı yalnızca listeden gizler, bilgisayardan silmez. Gizlenenleri geri getir ile geri alınır.",
+          "Dosyayı sil: dosyayı Geri Dönüşüm Kutusu'na taşır. Yanlışlıkla sildiyseniz oradan geri alabilirsiniz.",
+        ] },
+        { title: "Ayarlar", items: [
+          "İndirme klasörü: altyazıların kaydedileceği yeri Klasör seç ile belirleyin ya da yolu yazıp Kaydet düğmesine basın.",
+          "Renk teması: beş açık ve dört koyu temadan birini seçin.",
+          "Arayüz dili: Türkçe, Kurdî veya English.",
+        ] },
+        { title: "Sorun çıkarsa", items: [
+          "HTTP 429 hatası: kaynak site istekleri geçici olarak sınırlamıştır. Birkaç dakika bekleyip yeniden deneyin ya da başka bir dil seçin.",
+          "İndirme başarısız olursa program dil listesini yenileyip kendiliğinden bir kez daha dener. Yine olmazsa satırdaki Yenile ve yeniden dene düğmesine basın.",
+          "DRM ile korunan, ücretli veya oturum açmayı gerektiren içeriklerin altyazısı indirilemez.",
+          "Altyazı bulunamadı uyarısı çıkarsa videonun o dilde altyazısı yoktur; Otomatik ve Çeviriler sekmelerine bakın.",
+          "Önceden çalışan bir site artık çalışmıyorsa programın yeni sürümü gerekir.",
+        ] },
+      ],
+    },
     saved: '{name} kaydedildi', show: 'Göster', close: 'Kapat',
   },
   ku: {
-    nav: { download: 'Binnivîs daxe', files: 'Daxistin', sites: 'Çavkanî', settings: 'Mîheng', skip: 'Derbasî naveroka sereke bibe', main: 'Menûya sereke' },
+    nav: { download: 'Binnivîs daxe', files: 'Daxistin', sites: 'Çavkanî', guide: "Rêber", settings: 'Mîheng', skip: 'Derbasî naveroka sereke bibe', main: 'Menûya sereke' },
     home: {
       title: 'Binnivîs daxe', sub: 'Girêdana vîdyoyekê an lîsteya lêdanê pêve bike.',
       label: 'Girêdana vîdyoyê', placeholder: 'https://', paste: 'Ji panoyê pêve bike', fetch: 'Bîne', loading: 'Agahiyên vîdyoyê têne girtin…',
@@ -151,10 +209,68 @@ window.APP_MESSAGES = {
       network: 'Bi servera hundirîn a bernameyê re têkilî çênebû.',
     },
     themes: { ocean: 'Okyanûs', emerald: 'Zimrût', amethyst: 'Ametîst', rose: 'Gul', amber: 'Kehrîba', graphite: 'Grafît', midnight: 'Şîniya şevê', forest: 'Daristan', wine: 'Şerab' },
+    guide: {
+      title: "Rêber", sub: "Gav bi gav rave dike ka bername çawa tê bikaranîn.",
+      sections: [
+        { title: "Daxistina binnivîsa vîdyoyekê", items: [
+          "Girêdana vîdyoyê ji gerokê kopî bike.",
+          "Di rûpela Binnivîs daxe de girêdanê di qutiyê de pêve bike an li bişkoka Ji panoyê pêve bike bixe.",
+          "Li bişkoka Bîne bixe; bername navê vîdyoyê û zimanên binnivîsê nîşan dide.",
+          "Li jor formatekê hilbijêre, paşê di rêza zimanê ku tu dixwazî de li bişkoka Daxe bixe.",
+          "Pel di peldanka daxistinê de tê tomarkirin. Heke pelek bi heman navî hebe, li ser nayê nivîsandin; navekî cuda li pelê nû tê kirin.",
+        ] },
+        { title: "Beşên binnivîsê", items: [
+          "Binnivîs: binnivîsên rastîn ên ku xwediyê vîdyoyê lê zêde kirine. Heke hebin, encama herî rast ev in.",
+          "Xweber: binnivîsên ku malpera çavkanî bi xwe ji axaftinê çêdike. Dibe ku peyvên çewt tê de hebin.",
+          "Werger: wergerên xweber ên ku malpera çavkanî ji bo zimanên din çêdike.",
+          "Du ziman: du zimanan di yek pelî de dike yek.",
+          "Heke lîsteya zimanan dirêj be, navê zimên di qutiya Li zimên bigere de binivîse. Hejmarên li ser beşan nîşan didin ka di wê beşê de çend ziman hene.",
+        ] },
+        { title: "Formatên pelan", items: [
+          "SRT: formata binnivîsê ya herî belav. Piraniya lêderên vîdyoyê û televîzyonan wê vedikin.",
+          "VTT: formata ku ji bo lêderên li ser rûpelên înternetê tê bikaranîn.",
+          "TXT: bêyî agahiya demê, tenê nivîsa axaftinê. Ji bo xwendin an wergerandinê guncaw e.",
+          "TXT + dem: nivîsa sade ya ku di serê her rêzê de dem tê nivîsandin.",
+          "Resen: pelê ku malpera çavkanî dide, bêyî tu guherandinê.",
+        ] },
+        { title: "Binnivîsa bi du zimanan", items: [
+          "Beşa Du ziman veke.",
+          "Zimanê rêza jorîn û zimanê rêza jêrîn hilbijêre. Divê her du ziman ji hev cuda bin.",
+          "Li bişkoka Bi du zimanan daxe bixe. Di her rêzê de pêşî zimanê jorîn, li binê wî zimanê jêrîn xuya dibe.",
+          "Binnivîsa bi du zimanan bi formata Resen nayê daxistin; formateke din hilbijêre.",
+        ] },
+        { title: "Lîsteya lêdanê û kanal", items: [
+          "Girêdana lîsteyeke lêdanê an kanalekê pêve bike û li bişkoka Bîne bixe. Herî zêde 500 vîdyo têne nîşandan.",
+          "Vîdyoyên ku tu dixwazî daxî nîşan bike an bişkoka Hemûyan hilbijêre bi kar bîne.",
+          "Koda zimên binivîse (wek ku, tr an en) û formatê hilbijêre.",
+          "Heke tu dixwazî ji bo vîdyoyên ku binnivîsa wan a rastîn tune binnivîsa xweber bê bikaranîn, qutiya têkildar nîşan bike.",
+          "Li bişkoka Yên hilbijartî daxe bixe. Dema kar didome, tu dikarî bi Betal bike wî rawestînî.",
+          "Dema kar diqede, tê nîşandan ka çend pel hatine tomarkirin û kîjan vîdyo nehatine girtin.",
+        ] },
+        { title: "Rûpela Daxistin", items: [
+          "Pelên binnivîsê yên di peldanka daxistinê de nîşan dide. Pelên din ên wek vîdyo li vir xuya nabin û nayên jêbirin.",
+          "Di peldankê de nîşan bide: pelî di peldanka Windowsê de vedike.",
+          "Ji lîsteyê rake: pelî tenê ji lîsteyê vedişêre, ji komputerê jê nabe. Bi Yên veşartî vegerîne tê vegerandin.",
+          "Pelî jê bibe: pelî dişîne Sepeta Çopê. Heke te bi xeletî jê biribe, tu dikarî ji wir vegerînî.",
+        ] },
+        { title: "Mîheng", items: [
+          "Peldanka daxistinê: cihê ku binnivîs lê têne tomarkirin bi Peldankê hilbijêre diyar bike an rêyê binivîse û li bişkoka Tomar bike bixe.",
+          "Rengê xuyangê: ji pênc rengên vekirî û çar rengên tarî yekî hilbijêre.",
+          "Zimanê navrûyê: Türkçe, Kurdî an English.",
+        ] },
+        { title: "Heke pirsgirêk derkeve", items: [
+          "Çewtiya HTTP 429: malpera çavkanî daxwazan bi awayekî demkî sînor kiriye. Çend deqeyan bisekine û dîsa biceribîne an zimanekî din hilbijêre.",
+          "Heke daxistin bi ser nekeve, bername lîsteya zimanan nû dike û bi xwe carekê din diceribîne. Heke dîsa nebe, di rêzê de li bişkoka Nû bike û dîsa biceribîne bixe.",
+          "Binnivîsên naverokên bi DRM parastî, bi pere an yên ku têketinê dixwazin nayên daxistin.",
+          "Heke hişyariya ku binnivîs nehat dîtin derkeve, binnivîsa vîdyoyê bi wî zimanî tune; li beşên Xweber û Werger binêre.",
+          "Heke malpereke ku berê dixebitî êdî nexebite, guhertoya nû ya bernameyê pêwîst e.",
+        ] },
+      ],
+    },
     saved: '{name} hat tomarkirin', show: 'Nîşan bide', close: 'Bigire',
   },
   en: {
-    nav: { download: 'Get subtitles', files: 'Downloads', sites: 'Sources', settings: 'Settings', skip: 'Skip to main content', main: 'Main menu' },
+    nav: { download: 'Get subtitles', files: 'Downloads', sites: 'Sources', guide: "Guide", settings: 'Settings', skip: 'Skip to main content', main: 'Main menu' },
     home: {
       title: 'Get subtitles', sub: 'Paste a link to a video or playlist.',
       label: 'Video link', placeholder: 'https://', paste: 'Paste from clipboard', fetch: 'Fetch', loading: 'Getting video details…',
@@ -228,6 +344,64 @@ window.APP_MESSAGES = {
       network: 'Could not reach the app\'s internal server.',
     },
     themes: { ocean: 'Ocean', emerald: 'Emerald', amethyst: 'Amethyst', rose: 'Rose', amber: 'Amber', graphite: 'Graphite', midnight: 'Midnight', forest: 'Forest', wine: 'Wine' },
+    guide: {
+      title: "Guide", sub: "Explains step by step how to use the program.",
+      sections: [
+        { title: "Downloading subtitles for one video", items: [
+          "Copy the video link from your browser.",
+          "On the Get subtitles page, paste the link into the box or press Paste from clipboard.",
+          "Press Fetch; the program lists the video name and its subtitle languages.",
+          "Pick a format at the top, then press Download on the row of the language you want.",
+          "The file is saved to the download folder. An existing file with the same name is not overwritten; the new file gets a different name.",
+        ] },
+        { title: "Subtitle tabs", items: [
+          "Subtitles: real subtitles added by the uploader. When available they are the most accurate.",
+          "Automatic: subtitles the source site generates from speech on its own. They may contain wrong words.",
+          "Translations: automatic translations the source site makes into other languages.",
+          "Dual: joins two languages in one file.",
+          "If the language list is long, type the language name into the Search languages box. The numbers on the tabs show how many languages each tab has.",
+        ] },
+        { title: "File formats", items: [
+          "SRT: the most common subtitle format. Most video players and TVs open it.",
+          "VTT: the format used by players on web pages.",
+          "TXT: the spoken text only, without timing. Good for reading or translating.",
+          "TXT + time: plain text with the time at the start of each line.",
+          "Original: the file as the source site provides it, with no conversion.",
+        ] },
+        { title: "Dual-language subtitles", items: [
+          "Open the Dual tab.",
+          "Choose the top-line language and the bottom-line language. The two must be different.",
+          "Press the dual-language download button. Each cue shows the top language first and the bottom language under it.",
+          "Dual-language subtitles cannot be downloaded in the Original format; pick another format.",
+        ] },
+        { title: "Playlists and channels", items: [
+          "Paste the link of a playlist or a channel and press Fetch. Up to 500 videos are listed.",
+          "Tick the videos you want or use Select all.",
+          "Type the language code (for example tr, ku or en) and choose the format.",
+          "Tick the box if automatic subtitles should be used for videos that have no real subtitles.",
+          "Press the download button for the selection. You can stop a running job with Cancel.",
+          "When the job ends you see how many files were saved and which videos could not be fetched.",
+        ] },
+        { title: "Downloads page", items: [
+          "Lists the subtitle files in the download folder. Other files such as videos are not shown here and are never deleted.",
+          "Show in folder: opens the file in its Windows folder.",
+          "Remove from list: only hides the file from the list; it stays on the computer. Hidden files can be restored.",
+          "Delete file: moves the file to the Recycle Bin, where you can restore it if it was a mistake.",
+        ] },
+        { title: "Settings", items: [
+          "Download folder: choose where subtitles are saved with the folder button, or type the path and press Save.",
+          "Colour theme: pick one of five light and four dark themes.",
+          "Interface language: Türkçe, Kurdî or English.",
+        ] },
+        { title: "If something goes wrong", items: [
+          "HTTP 429 error: the source site is temporarily limiting requests. Wait a few minutes and try again, or pick another language.",
+          "If a download fails, the program refreshes the language list and retries once by itself. If it still fails, press the refresh-and-retry button on the row.",
+          "Subtitles of DRM-protected, paid or login-only content cannot be downloaded.",
+          "If no subtitles are found, the video has none in that language; check the Automatic and Translations tabs.",
+          "If a site that used to work stops working, a newer version of the program is needed.",
+        ] },
+      ],
+    },
     saved: '{name} saved', show: 'Show', close: 'Close',
   },
 };

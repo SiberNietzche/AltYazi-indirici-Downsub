@@ -28,6 +28,7 @@ ve istediğiniz dilin yanındaki biçim tuşuna tıklayın. Dosyalar varsayılan
 - İndirme başarısız olursa dil listesini tazeleyip kendiliğinden bir kez daha deneme,
   yine olmazsa satırda "Yenile ve yeniden dene" düğmesi
 - Tüm hata mesajları seçili arayüz dilinde
+- Program içinde adım adım kullanım kılavuzu (Türkçe, Kürtçe ve İngilizce)
 - Var olan dosyaların üzerine yazmama
 
 ## Sınırlar

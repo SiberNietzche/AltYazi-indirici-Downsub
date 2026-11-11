@@ -629,6 +629,22 @@
       </div>`,
   };
 
+  // Kılavuz metni i18n.js içindeki guide.sections dizisinden gelir; her bölüm bir başlık ve maddelerdir.
+  const Guide = {
+    computed: {
+      sections() { return this.$i18n.getLocaleMessage(this.$i18n.locale).guide.sections; },
+    },
+    template: `
+      <div class="page">
+        <h1 class="page-title">{{ $t('guide.title') }}</h1>
+        <p class="page-sub">{{ $t('guide.sub') }}</p>
+        <section v-for="(section, index) in sections" :key="index" class="panel pad guide-section">
+          <h2 class="section-title"><span class="step-num" aria-hidden="true">{{ index + 1 }}</span>{{ section.title }}</h2>
+          <ul class="guide-list"><li v-for="(item, i) in section.items" :key="i">{{ item }}</li></ul>
+        </section>
+      </div>`,
+  };
+
   const Settings = {
     components: { Segmented },
     data() { return { folder: this.$store.state.settings.download_dir }; },
@@ -819,6 +835,7 @@
       { path: '/', component: Home },
       { path: '/files', component: Files },
       { path: '/sites', component: Sites },
+      { path: '/guide', component: Guide },
       { path: '/settings', component: Settings },
     ],
   });
@@ -843,6 +860,7 @@
           { to: '/', icon: 'subtitles', label: this.$t('nav.download'), exact: true },
           { to: '/files', icon: 'folder_open', label: this.$t('nav.files'), count: this.fileCount },
           { to: '/sites', icon: 'public', label: this.$t('nav.sites') },
+          { to: '/guide', icon: 'menu_book', label: this.$t('nav.guide') },
           { to: '/settings', icon: 'settings', label: this.$t('nav.settings') },
         ];
       },
