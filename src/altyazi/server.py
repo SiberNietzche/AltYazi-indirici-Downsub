@@ -20,7 +20,15 @@ from .library import Library
 MAX_BODY = 5 * 1024 * 1024
 ALLOWED_FORMATS = {"srt", "vtt", "txt", "timed", "raw"}
 THEMES = {"ocean", "emerald", "amethyst", "rose", "amber", "graphite", "midnight", "forest", "wine"}
+DESIGNS = {"relief", "shine", "rainbow", "flat", "soft", "glass", "wave", "orbit", "arrow", "pill", "ring", "brutal"}
 LOCALES = {"tr", "ku", "en"}
+# Yazı ve arka plan ayarları: anahtar -> (geçerli değerler, varsayılan). Kimlikler web/themes.js ile aynıdır.
+LOOK_OPTIONS = {
+    "font": ({"segoe", "bahnschrift", "verdana", "georgia", "mono"}, "segoe"),
+    "font_size": ({"small", "normal", "large", "xlarge"}, "normal"),
+    "font_weight": ({"normal", "bold"}, "normal"),
+    "background": ({"auto", "none", "wave", "aurora", "splash"}, "auto"),
+}
 
 
 def web_root() -> Path:
@@ -36,7 +44,10 @@ class Settings:
     def __init__(self) -> None:
         self._path = app_data_dir() / "settings.json"
         self._lock = threading.Lock()
-        self.data = {"download_dir": str(Path.home() / "Downloads" / APP_DIR_NAME), "theme": "ocean", "locale": "tr"}
+        self.data = {
+            "download_dir": str(Path.home() / "Downloads" / APP_DIR_NAME), "theme": "ocean", "design": "rainbow", "locale": "tr",
+        }
+        self.data.update({key: default for key, (_, default) in LOOK_OPTIONS.items()})
         try:
             saved = json.loads(self._path.read_text("utf-8"))
         except (OSError, ValueError):
@@ -47,6 +58,11 @@ class Settings:
             self.data["download_dir"] = saved["download_dir"]
         if saved.get("locale") in LOCALES:
             self.data["locale"] = saved["locale"]
+        if saved.get("design") in DESIGNS:
+            self.data["design"] = saved["design"]
+        for key, (allowed, _) in LOOK_OPTIONS.items():
+            if isinstance(saved.get(key), str) and saved[key] in allowed:
+                self.data[key] = saved[key]
         if saved.get("theme") in THEMES:
             self.data["theme"] = saved["theme"]
         elif saved.get("dark"):  # Eski sürümün koyu tema tercihi korunur
@@ -63,6 +79,15 @@ class Settings:
                 if values["theme"] not in THEMES:
                     raise EngineError("unknown_theme")
                 self.data["theme"] = values["theme"]
+            if "design" in values:
+                if values["design"] not in DESIGNS:
+                    raise EngineError("unknown_design")
+                self.data["design"] = values["design"]
+            for key, (allowed, _) in LOOK_OPTIONS.items():
+                if key in values:
+                    if not isinstance(values[key], str) or values[key] not in allowed:
+                        raise EngineError("invalid_request")
+                    self.data[key] = values[key]
             if "locale" in values:
                 if values["locale"] not in LOCALES:
                     raise EngineError("unknown_locale")

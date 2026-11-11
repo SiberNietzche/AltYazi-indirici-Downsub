@@ -35,10 +35,12 @@
 
   const store = new Vuex.Store({
     state: {
-      settings: { download_dir: '', theme: 'ocean', locale: 'tr', version: '', can_choose: false },
+      settings: { download_dir: '', theme: 'ocean', design: 'rainbow', font: 'segoe', font_size: 'normal', font_weight: 'normal', background: 'auto', locale: 'tr', version: '', can_choose: false },
       video: null, url: '', toast: null, files: [], hiddenFiles: 0,
+      previewDesign: null, // Denenen ama henüz uygulanmamış tasarım şablonu
     },
     mutations: {
+      previewDesign(state, value) { state.previewDesign = value; },
       settings(state, value) { state.settings = Object.assign({}, state.settings, value); },
       video(state, value) { state.video = value; },
       url(state, value) { state.url = value; },
@@ -480,7 +482,7 @@
             <v-btn outlined height="40" class="btn-quiet" @click="paste">
               <v-icon left small aria-hidden="true">content_paste</v-icon>{{ $t('home.paste') }}
             </v-btn>
-            <v-btn id="fetch-button" type="submit" depressed color="primary" height="40" :loading="loading" :disabled="!url">{{ $t('home.fetch') }}</v-btn>
+            <v-btn id="fetch-button" class="btn-hero" type="submit" depressed color="primary" height="40" :loading="loading" :disabled="!url">{{ $t('home.fetch') }}</v-btn>
           </div>
         </v-form>
 
@@ -704,12 +706,359 @@
       </div>`,
   };
 
+  /* "Dalga" şablonunun arka planı: tuvalde akan beş renkli dalga (Aceternity WavyBackground
+     etkisinin React ve gürültü kitaplığı gerektirmeyen karşılığı). Bulanıklık CSS ile verilir. */
+  const WaveBackground = {
+    template: '<canvas class="wave-bg" aria-hidden="true"></canvas>',
+    mounted() {
+      const canvas = this.$el;
+      const ctx = canvas.getContext('2d');
+      const colors = ['#38bdf8', '#818cf8', '#c084fc', '#e879f9', '#22d3ee'];
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // Üst üste binen sinüsler, birbirine yakın ama aynı olmayan yumuşak dalgalar üretir.
+      const wave = (x, i, t) => 0.55 * Math.sin(x * 2.2 + i * 0.35 + t * 0.9)
+        + 0.3 * Math.sin(x * 4.1 + i * 0.6 - t * 0.6)
+        + 0.15 * Math.sin(x * 7.3 + i * 0.9 + t * 1.3);
+      const draw = (t) => {
+        const { width, height } = canvas;
+        ctx.clearRect(0, 0, width, height);
+        ctx.globalAlpha = 0.5;
+        ctx.lineWidth = 50;
+        colors.forEach((color, i) => {
+          ctx.beginPath();
+          ctx.strokeStyle = color;
+          for (let x = 0; x <= width + 5; x += 5) ctx.lineTo(x, wave(x / 800, i, t) * 100 + height * 0.5);
+          ctx.stroke();
+        });
+      };
+      const frame = (now) => {
+        draw(now / 2000);
+        this.raf = requestAnimationFrame(frame);
+      };
+      this.resize = () => {
+        canvas.width = window.innerWidth + 40;
+        canvas.height = window.innerHeight;
+        if (still) draw(0);
+      };
+      window.addEventListener('resize', this.resize);
+      this.resize();
+      if (!still) this.raf = requestAnimationFrame(frame);
+    },
+    beforeDestroy() {
+      cancelAnimationFrame(this.raf);
+      window.removeEventListener('resize', this.resize);
+    },
+  };
+
+  /* Şablona tıklamak onu tüm programda geçici olarak gösterir; kalıcı olması için
+     üstteki önizleme çubuğundan uygulanması gerekir. */
+  /* "Aurora" arka planı: WebGL parçacık gölgelendiricisiyle çizilen kutup ışığı (React Bits Aurora
+     bileşeninin kitaplıksız karşılığı). Kırmızı-siyah-kırmızı renk geçişi, alttan yükselir. */
+  const AuroraBackground = {
+    template: '<canvas class="aurora-bg" aria-hidden="true"></canvas>',
+    mounted() {
+      const canvas = this.$el;
+      const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
+      if (!gl) return; // WebGL yoksa arka plan boş kalır
+      const vertex = 'attribute vec2 position; void main() { gl_Position = vec4(position, 0.0, 1.0); }';
+      const fragment = `
+        precision highp float;
+        uniform float uTime;
+        uniform float uAmplitude;
+        uniform float uBlend;
+        uniform float uLight;
+        uniform vec2 uResolution;
+        uniform vec3 uColorStops[3];
+        vec3 permute(vec3 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
+        float snoise(vec2 v) {
+          const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+          vec2 i = floor(v + dot(v, C.yy));
+          vec2 x0 = v - i + dot(i, C.xx);
+          vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+          vec4 x12 = x0.xyxy + C.xxzz;
+          x12.xy -= i1;
+          i = mod(i, 289.0);
+          vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+          vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
+          m = m * m;
+          m = m * m;
+          vec3 x = 2.0 * fract(p * C.www) - 1.0;
+          vec3 h = abs(x) - 0.5;
+          vec3 ox = floor(x + 0.5);
+          vec3 a0 = x - ox;
+          m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
+          vec3 g;
+          g.x = a0.x * x0.x + h.x * x0.y;
+          g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+          return 130.0 * dot(m, g);
+        }
+        void main() {
+          vec2 uv = gl_FragCoord.xy / uResolution;
+          uv.y = 1.0 - uv.y; // Işık alttan yükselir
+          vec3 ramp = uv.x < 0.5 ? mix(uColorStops[0], uColorStops[1], uv.x * 2.0) : mix(uColorStops[1], uColorStops[2], (uv.x - 0.5) * 2.0);
+          float height = exp(snoise(vec2(uv.x * 2.0 + uTime * 0.1, uTime * 0.25)) * 0.5 * uAmplitude);
+          float intensity = 0.6 * (uv.y * 2.0 - height + 0.2);
+          float alpha = smoothstep(0.2 - uBlend * 0.5, 0.2 + uBlend * 0.5, intensity);
+          // Koyu zeminde ışık kararak söner; açık zeminde kararmak gri leke yaptığı için yalnızca saydamlaşır.
+          gl_FragColor = vec4(mix(intensity * ramp, ramp, uLight) * alpha, alpha);
+        }`;
+      const compile = (type, source) => {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        return shader;
+      };
+      const program = gl.createProgram();
+      gl.attachShader(program, compile(gl.VERTEX_SHADER, vertex));
+      gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fragment));
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+      gl.useProgram(program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      const position = gl.getAttribLocation(program, 'position');
+      gl.enableVertexAttribArray(position);
+      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+      const uniform = (name) => gl.getUniformLocation(program, name);
+      gl.uniform1f(uniform('uAmplitude'), 2.5);
+      gl.uniform1f(uniform('uBlend'), 1);
+      // Açık temada ortadaki siyah gri bir leke gibi durduğu için yerine koyu kırmızı kullanılır.
+      const stops = uniform('uColorStops');
+      const light = uniform('uLight');
+      const darkStops = [1, 0, 0, 0, 0, 0, 1, 0, 0];
+      const lightStops = [1, 0, 0, 0.6, 0, 0.12, 1, 0, 0];
+      const time = uniform('uTime');
+      const resolution = uniform('uResolution');
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const speed = 3;
+      const draw = (now) => {
+        const dark = document.documentElement.classList.contains('dark-theme');
+        gl.uniform3fv(stops, dark ? darkStops : lightStops);
+        gl.uniform1f(light, dark ? 0 : 1);
+        gl.uniform1f(time, now * 0.001 * speed);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      };
+      const frame = (now) => {
+        draw(now);
+        this.raf = requestAnimationFrame(frame);
+      };
+      this.resize = () => {
+        // Yumuşak bir görüntü olduğu için yarı çözünürlük yeterlidir.
+        canvas.width = Math.ceil(window.innerWidth / 2);
+        canvas.height = Math.ceil(window.innerHeight / 2);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.uniform2f(resolution, canvas.width, canvas.height);
+        if (still) draw(0);
+      };
+      window.addEventListener('resize', this.resize);
+      this.resize();
+      if (!still) this.raf = requestAnimationFrame(frame);
+    },
+    beforeDestroy() {
+      cancelAnimationFrame(this.raf);
+      if (this.resize) window.removeEventListener('resize', this.resize);
+    },
+  };
+
+  /* "İmleç izi" arka planı: imleç hareket ettikçe arkasında dağılan renkli lekeler, tıklayınca
+     sıçrama (React Bits SplashCursor etkisinin yaklaşık karşılığı). Özgün bileşen WebGL ile tam
+     bir sıvı benzetimi yapar; burada aynı izlenim, sürüklenip dönen ve sönen yumuşak lekelerle
+     2B tuvalde verilir. Lekeler yokken çizim döngüsü durur. */
+  const SplashBackground = {
+    template: '<canvas class="splash-bg" aria-hidden="true"></canvas>',
+    mounted() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const canvas = this.$el;
+      const ctx = canvas.getContext('2d');
+      // Özgün bileşene verilen değerler size 1.4 ve trail 1.6 idi; iz daha sakin olsun diye azaltıldı.
+      const SIZE = 1, FORCE = 0.8, SWIRL = 1, TRAIL = 1.1, MOMENTUM = 0.6;
+      const SCALE = 0.5; // Bulanık görüntü için yarı çözünürlük yeterlidir
+      const sprites = ['#ff3d00', '#ff9100', '#ffd600'].map((color) => {
+        const sprite = document.createElement('canvas');
+        sprite.width = sprite.height = 128;
+        const g = sprite.getContext('2d');
+        const gradient = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(0.45, `${color}99`);
+        gradient.addColorStop(1, `${color}00`);
+        g.fillStyle = gradient;
+        g.fillRect(0, 0, 128, 128);
+        return sprite;
+      });
+      let blobs = [];
+      let last = null;
+      let previous = 0;
+      let next = 0;
+      const frame = (now) => {
+        const dt = Math.min((now - previous) / 1000, 0.05);
+        previous = now;
+        const dark = document.documentElement.classList.contains('dark-theme');
+        const retain = Math.pow(0.05 + MOMENTUM * 0.25, dt);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Koyu zeminde renkler toplanarak parlar; açık zeminde toplama görünmez olduğu için üst üste boyanır.
+        ctx.globalCompositeOperation = dark ? 'lighter' : 'source-over';
+        blobs.forEach((b) => {
+          const angle = SWIRL * b.spin * 1.5 * dt;
+          const cos = Math.cos(angle), sin = Math.sin(angle);
+          const vx = (b.vx * cos - b.vy * sin) * retain;
+          b.vy = (b.vx * sin + b.vy * cos) * retain;
+          b.vx = vx;
+          b.x += b.vx * dt;
+          b.y += b.vy * dt;
+          b.r += 26 * SIZE * dt;
+          b.life -= dt / TRAIL;
+          if (b.life <= 0) return;
+          ctx.globalAlpha = (dark ? 0.36 : 0.6) * b.life * b.life;
+          ctx.drawImage(b.sprite, (b.x - b.r) * SCALE, (b.y - b.r) * SCALE, b.r * 2 * SCALE, b.r * 2 * SCALE);
+        });
+        blobs = blobs.filter((b) => b.life > 0);
+        this.raf = blobs.length ? requestAnimationFrame(frame) : null;
+      };
+      const spawn = (x, y, vx, vy, radius) => {
+        blobs.push({ x, y, vx, vy, r: radius * SIZE * (0.7 + Math.random() * 0.6), life: 1, spin: Math.random() * 2 - 1, sprite: sprites[next++ % sprites.length] });
+        if (blobs.length > 220) blobs.shift();
+        if (!this.raf) {
+          previous = performance.now();
+          this.raf = requestAnimationFrame(frame);
+        }
+      };
+      const splash = (x, y) => {
+        for (let i = 0; i < 9; i += 1) {
+          const angle = (i / 9) * Math.PI * 2 + Math.random() * 0.4;
+          const speed = 260 * FORCE * (0.5 + Math.random());
+          spawn(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, 46);
+        }
+      };
+      this.move = (event) => {
+        const point = { x: event.clientX, y: event.clientY };
+        if (!last) { last = point; return; }
+        const dx = point.x - last.x, dy = point.y - last.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 4) return;
+        const steps = Math.min(2, Math.ceil(distance / 40));
+        for (let i = 1; i <= steps; i += 1) {
+          spawn(last.x + (dx * i) / steps, last.y + (dy * i) / steps,
+            dx * FORCE * 10 + Math.random() * 40 - 20, dy * FORCE * 10 + Math.random() * 40 - 20, 30);
+        }
+        last = point;
+      };
+      this.down = (event) => splash(event.clientX, event.clientY);
+      this.resize = () => {
+        canvas.width = Math.ceil(window.innerWidth * SCALE);
+        canvas.height = Math.ceil(window.innerHeight * SCALE);
+      };
+      window.addEventListener('pointermove', this.move, { passive: true });
+      window.addEventListener('pointerdown', this.down, { passive: true });
+      window.addEventListener('resize', this.resize);
+      this.resize();
+      splash(window.innerWidth / 2, window.innerHeight / 2); // Açılışta etkinin var olduğunu gösterir
+    },
+    beforeDestroy() {
+      cancelAnimationFrame(this.raf);
+      window.removeEventListener('pointermove', this.move);
+      window.removeEventListener('pointerdown', this.down);
+      window.removeEventListener('resize', this.resize);
+    },
+  };
+
+  // Seçildiği anda kaydedilen bir ayarı v-model ile bağlamak için hesaplanmış özellik üretir.
+  const savedSetting = (key) => ({
+    get() { return this.$store.state.settings[key]; },
+    set(value) { this.$store.dispatch('saveSettings', { [key]: value }).catch(notifyError); },
+  });
+
+  const Design = {
+    components: { Segmented },
+    data() { return { format: 'srt', tab: 'manual', sample: '' }; },
+    computed: {
+      font: savedSetting('font'),
+      fontSize: savedSetting('font_size'),
+      fontWeight: savedSetting('font_weight'),
+      background: savedSetting('background'),
+      backgrounds() { return window.APP_BACKGROUNDS.map((b) => ({ value: b, text: this.$t(`backgrounds.${b}`) })); },
+      fonts() { return window.APP_FONTS.map((f) => ({ value: f.id, text: f.label })); },
+      fontSizes() { return Object.keys(window.APP_FONT_SIZES).map((s) => ({ value: s, text: this.$t(`fontSizes.${s}`) })); },
+      fontWeights() { return ['normal', 'bold'].map((w) => ({ value: w, text: this.$t(`fontWeights.${w}`) })); },
+      designs() { return window.APP_DESIGNS; },
+      applied() { return this.$store.state.settings.design; },
+      shown() { return this.$store.state.previewDesign || this.applied; },
+      formats() { return ['srt', 'vtt', 'txt'].map((f) => ({ value: f, text: this.$t(`fmt.${f}`) })); },
+      tabs() { return ['manual', 'auto', 'translated']; },
+    },
+    methods: {
+      pick(id) { this.$store.commit('previewDesign', id === this.applied ? null : id); },
+    },
+    template: `
+      <div class="page">
+        <h1 class="page-title">{{ $t('design.title') }}</h1>
+        <p class="page-sub">{{ $t('design.sub') }}</p>
+        <div class="design-grid" role="group" :aria-label="$t('design.title')">
+          <button v-for="d in designs" :key="d" type="button" class="design-card" :data-design-option="d"
+                  :aria-pressed="String(shown === d)" @click="pick(d)">
+            <span class="design-thumb" aria-hidden="true">
+              <span class="mini-panel">
+                <span class="mini-line"></span>
+                <span class="mini-row"><span class="mini-btn"></span><span class="mini-btn mini-primary"></span></span>
+              </span>
+            </span>
+            <span class="design-head">
+              <span class="design-name">{{ $t('designs.' + d) }}</span>
+              <span v-if="applied === d" class="design-badge">{{ $t('design.applied') }}</span>
+              <span v-else-if="shown === d" class="design-badge">{{ $t('design.preview') }}</span>
+            </span>
+            <span class="small muted">{{ $t('designInfo.' + d) }}</span>
+          </button>
+        </div>
+        <section id="font-panel" class="panel pad mt-4">
+          <div class="section-title">{{ $t('design.fonts') }}</div>
+          <p class="small muted mt-1 mb-0">{{ $t('design.fontsHint') }}</p>
+          <div class="font-options">
+            <span class="field-label">{{ $t('design.background') }}</span>
+            <segmented v-model="background" :options="backgrounds" :label="$t('design.background')"></segmented>
+            <span class="field-label">{{ $t('design.fontFamily') }}</span>
+            <segmented v-model="font" :options="fonts" :label="$t('design.fontFamily')"></segmented>
+            <span class="field-label">{{ $t('design.fontSize') }}</span>
+            <segmented v-model="fontSize" :options="fontSizes" :label="$t('design.fontSize')"></segmented>
+            <span class="field-label">{{ $t('design.fontWeight') }}</span>
+            <segmented v-model="fontWeight" :options="fontWeights" :label="$t('design.fontWeight')"></segmented>
+          </div>
+        </section>
+        <section class="panel pad">
+          <div class="section-title">{{ $t('design.samples') }}</div>
+          <p class="small muted mt-1 mb-0">{{ $t('design.samplesHint') }}</p>
+          <div class="sample-row">
+            <v-text-field v-model="sample" :placeholder="$t('home.placeholder')" :aria-label="$t('home.label')" prepend-inner-icon="link"
+                          outlined dense hide-details></v-text-field>
+            <v-btn outlined height="40" class="btn-quiet"><v-icon left small aria-hidden="true">content_paste</v-icon>{{ $t('home.paste') }}</v-btn>
+            <v-btn class="btn-hero" depressed color="primary" height="40">{{ $t('home.fetch') }}</v-btn>
+          </div>
+          <div class="sample-row">
+            <div class="tabs sample-tabs" role="tablist">
+              <button v-for="t in tabs" :key="t" class="tab" role="tab" type="button" :aria-selected="String(tab === t)" @click="tab = t">{{ $t('tracks.' + t) }}</button>
+            </div>
+            <v-spacer></v-spacer>
+            <segmented v-model="format" :options="formats" :label="$t('home.format')"></segmented>
+          </div>
+          <div class="sample-row">
+            <v-btn small><v-icon left small aria-hidden="true">file_download</v-icon>{{ $t('home.download') }}</v-btn>
+            <v-btn small disabled>{{ $t('home.download') }}</v-btn>
+            <v-btn class="btn-danger"><v-icon left small aria-hidden="true">delete_outline</v-icon>{{ $t('files.confirm') }}</v-btn>
+            <v-btn icon small class="round-button" :aria-label="$t('files.show')"><v-icon small aria-hidden="true">folder_open</v-icon></v-btn>
+            <v-btn icon small class="round-button round-danger" :aria-label="$t('files.delete')"><v-icon small aria-hidden="true">delete_outline</v-icon></v-btn>
+          </div>
+        </section>
+      </div>`,
+  };
+
   const router = new VueRouter({
     mode: 'hash',
     routes: [
       { path: '/', component: Home },
       { path: '/files', component: Files },
       { path: '/sites', component: Sites },
+      { path: '/design', component: Design },
       { path: '/settings', component: Settings },
     ],
   });
@@ -720,9 +1069,22 @@
     store,
     router,
     vuetify,
-    data() { return { showToast: false, ready: false }; },
+    components: { WaveBackground, AuroraBackground, SplashBackground },
+    data() { return { showToast: false, ready: false, applying: false }; },
     computed: {
       toast() { return this.$store.state.toast; },
+      previewDesign() { return this.$store.state.previewDesign; },
+      design() { return this.previewDesign || this.$store.state.settings.design; },
+      // "auto" seçiliyken arka planı şablon belirler: dalgalı şablonlar dalga, diğerleri düz.
+      background() {
+        const chosen = this.$store.state.settings.background;
+        if (chosen !== 'auto') return chosen;
+        return ['wave', 'orbit', 'arrow'].includes(this.design) ? 'wave' : 'none';
+      },
+      typography() {
+        const s = this.$store.state.settings;
+        return { font: s.font, size: s.font_size, weight: s.font_weight };
+      },
       theme() { return this.$store.state.settings.theme; },
       locale() { return this.$store.state.settings.locale; },
       folder() { return this.$store.state.settings.download_dir; },
@@ -733,6 +1095,7 @@
           { to: '/', icon: 'subtitles', label: this.$t('nav.download'), exact: true },
           { to: '/files', icon: 'folder_open', label: this.$t('nav.files'), count: this.fileCount },
           { to: '/sites', icon: 'public', label: this.$t('nav.sites') },
+          { to: '/design', icon: 'palette', label: this.$t('nav.design') },
           { to: '/settings', icon: 'settings', label: this.$t('nav.settings') },
         ];
       },
@@ -744,6 +1107,17 @@
     watch: {
       toast(value) { this.showToast = !!value; },
       theme: { immediate: true, handler(value) { applyTheme(value); } },
+      design: { immediate: true, handler(value) { document.documentElement.dataset.design = value; } },
+      typography: {
+        immediate: true,
+        handler(value) {
+          const root = document.documentElement;
+          const font = window.APP_FONTS.find((f) => f.id === value.font) || window.APP_FONTS[0];
+          root.style.setProperty('--font-family', font.stack);
+          root.style.setProperty('--font-scale', window.APP_FONT_SIZES[value.size] || 1);
+          root.dataset.fontWeight = value.weight;
+        },
+      },
       locale: { immediate: true, handler(value) { this.$i18n.locale = value; document.documentElement.lang = value; } },
       $route() { this.focusMain(); },
     },
@@ -755,19 +1129,37 @@
     methods: {
       reveal,
       focusMain() { if (this.$refs.main) this.$refs.main.focus({ preventScroll: false }); },
+      async applyDesign() {
+        const id = this.previewDesign;
+        this.applying = true;
+        try {
+          await this.$store.dispatch('saveSettings', { design: id });
+          this.$store.commit('previewDesign', null);
+          notify(this.$t('design.appliedToast', { name: this.$t(`designs.${id}`) }));
+        } catch (err) {
+          notifyError(err);
+        } finally {
+          this.applying = false;
+        }
+      },
+      cancelDesign() { this.$store.commit('previewDesign', null); },
     },
     template: `
       <v-app :class="{ compact }" :style="{ visibility: ready ? 'visible' : 'hidden' }">
+        <wave-background v-if="background === 'wave'"></wave-background>
+        <aurora-background v-else-if="background === 'aurora'"></aurora-background>
+        <splash-background v-else-if="background === 'splash'"></splash-background>
         <button class="skip" type="button" @click="focusMain">{{ $t('nav.skip') }}</button>
+        <div v-if="previewDesign" id="preview-bar" class="preview-bar" role="region" :aria-label="$t('design.preview')">
+          <v-icon small aria-hidden="true">visibility</v-icon>
+          <span>{{ $t('design.previewing', { name: $t('designs.' + previewDesign) }) }}</span>
+          <v-btn id="design-apply" small depressed color="primary" :loading="applying" @click="applyDesign">{{ $t('design.apply') }}</v-btn>
+          <v-btn id="design-cancel" small :disabled="applying" @click="cancelDesign">{{ $t('design.cancel') }}</v-btn>
+        </div>
         <v-navigation-drawer app permanent class="sidebar" width="224" mini-variant-width="64" :mini-variant="compact">
           <div class="brand">
-            <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-              <rect class="brand-face" width="28" height="28" rx="6"/>
-              <path d="M12.5 5h3v6h3.5L14 16 9 11h3.5z" fill="#fff"/>
-              <rect x="6" y="18.5" width="16" height="2.4" rx="1.2" fill="#fff"/>
-              <rect x="6" y="22" width="10" height="2.4" rx="1.2" fill="#9fd0f5"/>
-            </svg>
-            <span v-if="!compact">Altyazı İndirici</span>
+            <span class="emblem" aria-hidden="true"></span>
+            <span v-if="!compact" class="brand-name">Altyazı İndirici</span>
           </div>
           <nav :aria-label="$t('nav.main')">
             <v-list class="nav" dense nav>

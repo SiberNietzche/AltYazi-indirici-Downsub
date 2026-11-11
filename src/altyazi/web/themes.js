@@ -56,6 +56,28 @@
     skeleton: t.dark ? t.surface2 : t.border,
   });
 
+  /* Tasarım şablonları: biçimleri style.css sonundadır. Yeni şablon eklerken kimliğini
+     server.py içindeki DESIGNS kümesine ve i18n.js içindeki adlara da ekleyin. */
+  const designs = ['relief', 'shine', 'rainbow', 'flat', 'soft', 'glass', 'wave', 'orbit', 'arrow', 'pill', 'ring', 'brutal'];
+
+  /* Yazı seçenekleri. Yazı tipleri Windows ile gelenlerdir; program çevrimdışı çalıştığı için
+     dışarıdan yazı tipi yüklenmez. Kimlikler server.py içindeki kümelerle aynı olmalıdır. */
+  const fonts = [
+    { id: 'segoe', label: 'Segoe UI', stack: '"Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif' },
+    { id: 'bahnschrift', label: 'Bahnschrift', stack: 'Bahnschrift, "Segoe UI", system-ui, sans-serif' },
+    { id: 'verdana', label: 'Verdana', stack: 'Verdana, "Segoe UI", system-ui, sans-serif' },
+    { id: 'georgia', label: 'Georgia', stack: 'Georgia, Cambria, "Times New Roman", serif' },
+    { id: 'mono', label: 'Consolas', stack: '"Cascadia Mono", Consolas, monospace' },
+  ];
+  const fontSizes = { small: 0.9, normal: 1, large: 1.12, xlarge: 1.25 };
+
+  /* Arka planlar: "auto" şablonun kendi arka planını kullanır. Çizimleri app.js içindedir. */
+  const backgrounds = ['auto', 'none', 'wave', 'aurora', 'splash'];
+
+  window.APP_BACKGROUNDS = backgrounds;
+  window.APP_FONTS = fonts;
+  window.APP_FONT_SIZES = fontSizes;
+  window.APP_DESIGNS = designs;
   window.APP_THEMES = themes;
   window.APP_THEME_TOKENS = tokens;
 })();
