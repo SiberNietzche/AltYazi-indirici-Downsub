@@ -20,7 +20,8 @@ class SettingsTests(unittest.TestCase):
     def setUp(self):
         self.folder = tempfile.TemporaryDirectory()
         self.addCleanup(self.folder.cleanup)
-        patcher = mock.patch.dict(os.environ, {"APPDATA": self.folder.name})
+        # Ayar klasörü her işletim sisteminde aynı yolla sınama klasörüne yönlendirilir.
+        patcher = mock.patch.dict(os.environ, {"ALTYAZI_DATA_DIR": str(Path(self.folder.name) / "AltyaziIndirici")})
         patcher.start()
         self.addCleanup(patcher.stop)
         self.path = Path(self.folder.name) / "AltyaziIndirici" / "settings.json"
