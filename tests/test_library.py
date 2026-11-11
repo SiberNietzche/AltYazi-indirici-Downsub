@@ -175,3 +175,32 @@ class MessageCoverageTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FreedesktopTrashTests(unittest.TestCase):
+    """Linux çöp kutusu kuralı; yalnızca dosya işlemleri kullandığı için her sistemde sınanır."""
+
+    def setUp(self):
+        from altyazi.system import trash_freedesktop
+
+        self.trash_file = trash_freedesktop
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.root = Path(self.folder.name)
+        self.trash = self.root / "Trash"
+
+    def test_file_moves_with_restore_info_and_same_names_do_not_collide(self):
+        for round_number in range(2):
+            source = self.root / "film.tr.srt"
+            source.write_text(f"altyazı {round_number}", "utf-8")
+            self.assertTrue(self.trash_file(str(source), self.trash))
+            self.assertFalse(source.exists())
+        self.assertEqual(sorted(p.name for p in (self.trash / "files").iterdir()), ["film.tr (1).srt", "film.tr.srt"])
+        info = (self.trash / "info" / "film.tr.srt.trashinfo").read_text("utf-8")
+        self.assertTrue(info.startswith("[Trash Info]\nPath="))
+        self.assertIn("film.tr.srt", info)
+        self.assertEqual((self.trash / "files" / "film.tr (1).srt").read_text("utf-8"), "altyazı 1")
+
+    def test_missing_file_is_reported_and_leaves_no_record(self):
+        self.assertFalse(self.trash_file(str(self.root / "yok.srt"), self.trash))
+        self.assertEqual(list((self.trash / "info").iterdir()), [])

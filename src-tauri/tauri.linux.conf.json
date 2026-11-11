@@ -1,0 +1,12 @@
+{
+  "bundle": {
+    "targets": ["deb", "appimage"],
+    "category": "Utility",
+    "shortDescription": "Video bağlantısından altyazı indirir",
+    "linux": {
+      "deb": {
+        "section": "utils"
+      }
+    }
+  }
+}

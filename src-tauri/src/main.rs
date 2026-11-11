@@ -106,7 +106,7 @@ fn main() {
                     .min_inner_size(760.0, 560.0)
                     .build();
                 if window.is_err() {
-                    fail(&handle, "Program penceresi açılamadı. WebView2 Runtime kurulu olmalıdır.");
+                    fail(&handle, "Program penceresi açılamadı. Sistemin web görünümü (Windows'ta WebView2 Runtime) kurulu olmalıdır.");
                 }
             });
             Ok(())

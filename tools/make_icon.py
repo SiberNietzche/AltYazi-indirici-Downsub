@@ -2,6 +2,7 @@
 
     python make_icon.py çıktı.ico            uygulama simgesi (koyu zeminde defne çelengi ve güneş)
     python make_icon.py çıktı.ico çelenk.svg  ayrıca arayüzün maske olarak kullandığı SVG
+    python make_icon.py çıktı.ico çelenk.svg simge.png  ayrıca Linux ve Android için PNG simge
 
 Çelengin geometrisi tek yerde (laurel) tanımlıdır; simge de SVG de ondan çizilir.
 src/altyazi/web/laurel.svg bu betikle üretilmiştir; geometri değişirse yeniden üretin.
@@ -138,7 +139,7 @@ def svg():
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIZE} {SIZE}">{"".join(arc)}{leaves}{sun}</svg>\n'
 
 
-def main(icon_path, svg_path=None):
+def main(icon_path, svg_path=None, png_path=None):
     image = png()
     icon = struct.pack("<HHH", 0, 1, 1) + struct.pack("<BBBBHHII", 0, 0, 0, 0, 1, 32, len(image), 22) + image
     with open(icon_path, "wb") as handle:
@@ -146,7 +147,10 @@ def main(icon_path, svg_path=None):
     if svg_path:
         with open(svg_path, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(svg())
+    if png_path:
+        with open(png_path, "wb") as handle:
+            handle.write(image)
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:3])
+    main(*sys.argv[1:4])

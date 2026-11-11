@@ -402,3 +402,56 @@ window.APP_MESSAGES = {
     saved: '{name} saved', show: 'Show', close: 'Close',
   },
 };
+
+// Çöp kutusunun adı işletim sistemine göre değişir; metinler Windows adıyla yazılmıştır.
+(function () {
+  if (/Windows/.test(navigator.userAgent)) return;
+  if (window.AndroidHost || /Android/.test(navigator.userAgent)) {
+    // Android'de çöp kutusu, klasör seçimi ve dosya yöneticisi yoktur; ilgili metinler değişir.
+    const android = {
+      tr: {
+        deleted: '{count} dosya silindi', one: '{name} kalıcı olarak silinecek.', all: '{count} altyazı dosyası kalıcı olarak silinecek.',
+        del: 'Dosyayı sil: dosyayı telefondan kalıcı olarak siler.',
+        folder: 'Dosyalar telefonun İndirilenler klasöründeki AltyaziIndirici klasörüne kaydedilir; dosya yöneticisiyle açabilirsiniz.',
+        share: 'Başka bir uygulamada (örneğin YouTube) Paylaş düğmesine basıp Altyazı İndirici\'yi seçerseniz bağlantı kendiliğinden gelir.',
+        sub: 'Tercihleriniz bu cihazda saklanır.', hint: 'Dosyalar telefonun İndirilenler klasörüne kaydedilir.',
+      },
+      ku: {
+        deleted: '{count} pel hatin jêbirin', one: '{name} dê bi temamî bê jêbirin.', all: '{count} pelên binnivîsê dê bi temamî bên jêbirin.',
+        del: 'Pelî jê bibe: pelî bi temamî ji telefonê jê dibe.',
+        folder: 'Pel di peldanka AltyaziIndirici ya di nav peldanka Daxistinan a telefonê de têne tomarkirin; tu dikarî bi rêvebirê pelan vekî.',
+        share: 'Heke tu di sepaneke din de (wek YouTube) li bişkoka Parve bike bixî û Altyazı İndirici hilbijêrî, girêdan bi xwe tê.',
+        sub: 'Bijareyên te li ser vê cîhazê têne tomarkirin.', hint: 'Pel di peldanka Daxistinan a telefonê de têne tomarkirin.',
+      },
+      en: {
+        deleted: '{count} files deleted', one: '{name} will be permanently deleted.', all: '{count} subtitle files will be permanently deleted.',
+        del: 'Delete file: permanently deletes the file from the phone.',
+        folder: 'Files are saved to the AltyaziIndirici folder inside the phone\'s Downloads folder; open it with a file manager.',
+        share: 'If you press Share in another app (for example YouTube) and pick Altyazı İndirici, the link arrives by itself.',
+        sub: 'Your preferences are stored on this device.', hint: 'Files are saved to the phone\'s Downloads folder.',
+      },
+    };
+    Object.keys(android).forEach((locale) => {
+      const messages = window.APP_MESSAGES[locale];
+      const text = android[locale];
+      Object.assign(messages.files, { deleted: text.deleted, confirmOne: text.one, confirmAll: text.all });
+      messages.settings.folderHint = text.hint;
+      messages.settings.sub = text.sub;
+      const sections = messages.guide.sections;
+      sections[0].items.push(text.share);
+      // İndirilenler: "Klasörde göster" maddesi çıkar, silme maddesi değişir. Ayarlar: klasör maddesi değişir.
+      sections[5].items.splice(1, 1);
+      sections[5].items[sections[5].items.length - 1] = text.del;
+      sections[6].items[0] = text.folder;
+    });
+    return;
+  }
+  const names = [['Geri Dönüşüm Kutusu', 'Çöp Kutusu'], ['Recycle Bin', 'Trash']];
+  const rename = (node) => {
+    Object.keys(node).forEach((key) => {
+      if (typeof node[key] === 'string') names.forEach(([from, to]) => { node[key] = node[key].split(from).join(to); });
+      else if (node[key] && typeof node[key] === 'object') rename(node[key]);
+    });
+  };
+  rename(window.APP_MESSAGES);
+})();

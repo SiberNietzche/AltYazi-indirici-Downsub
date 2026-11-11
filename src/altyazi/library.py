@@ -1,43 +1,20 @@
-"""İndirme klasöründeki altyazı dosyalarını listeleme, gizleme ve Geri Dönüşüm Kutusu'na taşıma."""
+"""İndirme klasöründeki altyazı dosyalarını listeleme, gizleme ve çöp kutusuna taşıma."""
 
 from __future__ import annotations
 
-import ctypes
 import json
 import os
 import threading
-from ctypes import wintypes
 from pathlib import Path
 from typing import Callable
 
 from .engine import EngineError
+from .system import move_to_trash
 
 # Yalnızca altyazıya özgü uzantılar otomatik listelenir. TXT gibi genel uzantılı dosyalar,
 # ancak bu program yazdıysa listeye girer; böylece kullanıcının başka dosyaları etkilenmez.
 SUBTITLE_EXTENSIONS = {".srt", ".vtt", ".json3", ".ttml", ".dfxp", ".srv1", ".srv2", ".srv3", ".ass", ".ssa"}
 MAX_FILES = 2000
-
-
-class _SHFILEOPSTRUCTW(ctypes.Structure):
-    _fields_ = [
-        ("hwnd", wintypes.HWND),
-        ("wFunc", wintypes.UINT),
-        ("pFrom", wintypes.LPCWSTR),
-        ("pTo", wintypes.LPCWSTR),
-        ("fFlags", wintypes.WORD),
-        ("fAnyOperationsAborted", wintypes.BOOL),
-        ("hNameMappings", wintypes.LPVOID),
-        ("lpszProgressTitle", wintypes.LPCWSTR),
-    ]
-
-
-def move_to_trash(path: str) -> bool:
-    """Dosyayı Geri Dönüşüm Kutusu'na taşır; başarılıysa True döndürür."""
-    fo_delete = 3
-    flags = 0x0040 | 0x0010 | 0x0004 | 0x0400  # ALLOWUNDO, NOCONFIRMATION, SILENT, NOERRORUI
-    operation = _SHFILEOPSTRUCTW(None, fo_delete, path + "\0", None, flags, False, None, None)
-    result = ctypes.windll.shell32.SHFileOperationW(ctypes.byref(operation))
-    return result == 0 and not operation.fAnyOperationsAborted and not os.path.exists(path)
 
 
 def _key(path: str | Path) -> str:

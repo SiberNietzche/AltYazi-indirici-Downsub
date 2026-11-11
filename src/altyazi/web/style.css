@@ -291,6 +291,12 @@ input[type="checkbox"] { width: 16px; height: 16px; flex: 0 0 16px; accent-color
 .skip { position: absolute; left: 8px; top: -60px; z-index: 20; padding: 8px 12px; border-radius: 6px; background: var(--accent); color: var(--on-accent); border: 0; font-weight: 600; }
 .skip:focus { top: 8px; }
 
+/* Android uygulamasında dosya yöneticisi ve klasör seçimi yoktur */
+.mobile-only { display: none; }
+html.platform-android .desktop-only { display: none !important; }
+html.platform-android .mobile-only { display: block; }
+.folder-path { font-size: calc(14px * var(--font-scale)); color: var(--text); overflow-wrap: anywhere; }
+
 /* Kılavuz sayfası */
 .guide-section .section-title { display: flex; align-items: center; gap: 10px; }
 .guide-section .step-num { flex: 0 0 auto; margin: 0; }
@@ -335,4 +341,12 @@ input[type="checkbox"] { width: 16px; height: 16px; flex: 0 0 16px; accent-color
   /* Dar pencerede menü öğeleri tam daireye dönüşür */
   .nav.v-list .v-list-item { width: 46px; height: 46px; padding: 0; justify-content: center; }
   .nav .v-list-item__icon { margin: 0 !important; }
+}
+
+/* Telefon genişliği: bağlantı kutusu tam satır olur, düğmeler altına iner */
+@media (max-width: 600px) {
+  .page { padding: 16px 10px 28px; }
+  .url-row { flex-wrap: wrap; }
+  .url-row .v-input { flex-basis: 100%; }
+  .url-row .v-btn { flex: 1 1 auto; }
 }

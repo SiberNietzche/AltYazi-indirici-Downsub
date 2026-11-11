@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Altyazı İndirici</string>
+    <string name="start_failed">Altyazı motoru başlatılamadı. Uygulamayı kapatıp yeniden açın.</string>
+</resources>

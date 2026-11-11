@@ -22,7 +22,7 @@ Check 'tests'
 
 # The window icon and the emblem mask come from the same drawing.
 New-Item -ItemType Directory -Force src-tauri\icons, src-tauri\binaries | Out-Null
-& $py tools\make_icon.py src-tauri\icons\icon.ico src\altyazi\web\laurel.svg
+& $py tools\make_icon.py src-tauri\icons\icon.ico src\altyazi\web\laurel.svg src-tauri\icons\icon.png
 Check 'icon'
 
 # Keep this machine's user folder out of the binaries: the Rust compiler otherwise embeds

@@ -6,14 +6,14 @@ import json
 import mimetypes
 import os
 import secrets
-import subprocess
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from . import APP_DIR_NAME, __version__
+from . import __version__
+from . import system
 from .engine import Engine, EngineError, JobManager
 from .library import Library
 
@@ -29,7 +29,7 @@ def web_root() -> Path:
 
 
 def app_data_dir() -> Path:
-    return Path(os.environ.get("APPDATA") or Path.home()) / APP_DIR_NAME
+    return system.data_dir()
 
 
 class Settings:
@@ -37,7 +37,7 @@ class Settings:
         self._path = app_data_dir() / "settings.json"
         self._lock = threading.Lock()
         self.data = {
-            "download_dir": str(Path.home() / "Downloads" / APP_DIR_NAME), "theme": "ocean", "locale": "tr",
+            "download_dir": str(system.default_download_dir()), "theme": "ocean", "locale": "tr",
         }
         try:
             saved = json.loads(self._path.read_text("utf-8"))
@@ -85,14 +85,6 @@ class AppContext:
         self.library = Library(app_data_dir() / "files.json")
         self.jobs = JobManager(self.engine, on_saved=self.library.record_written)
         self.settings = Settings()
-
-
-def _open_in_explorer(path: Path) -> None:
-    if path.is_file():
-        subprocess.Popen(["explorer", "/select,", str(path)])
-    else:
-        path.mkdir(parents=True, exist_ok=True)
-        os.startfile(path)  # noqa: S606 - yalnızca uygulamanın indirme klasörü
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -177,7 +169,7 @@ class Handler(BaseHTTPRequestHandler):
 
     # Uç noktalar --------------------------------------------------------
     def _settings_get(self, _body: dict) -> dict:
-        return {**self.context.settings.data, "version": __version__}
+        return {**self.context.settings.data, "version": __version__, "platform": system.PLATFORM}
 
     def _settings_set(self, body: dict) -> dict:
         return self.context.settings.update(body)
@@ -223,9 +215,9 @@ class Handler(BaseHTTPRequestHandler):
         requested = body.get("path")
         directory = self.context.settings.directory
         if isinstance(requested, str) and self.context.library.contains(directory, requested):
-            _open_in_explorer(Path(requested))
+            system.reveal(Path(requested))
         else:
-            _open_in_explorer(directory)
+            system.reveal(directory)
         return {"ok": True}
 
     def _files(self, _body: dict) -> dict:

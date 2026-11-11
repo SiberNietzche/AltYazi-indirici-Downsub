@@ -4,6 +4,10 @@
 
   const token = new URLSearchParams(window.location.search).get('token') || '';
   const tauri = window.__TAURI__ || null; // Yalnızca Tauri kabuğunda tanımlıdır
+  // Android uygulamasında sayfa bir WebView içinde çalışır; AndroidHost'u uygulama sağlar.
+  // Orada dosya yöneticisi ve klasör seçimi yoktur: "desktop-only" öğeler gizlenir.
+  const android = window.AndroidHost || null;
+  if (android || /Android/.test(navigator.userAgent)) document.documentElement.classList.add('platform-android');
   const api = axios.create({ baseURL: '/api', headers: { 'X-App-Token': token }, timeout: 0 });
   // Sunucu hata kodu gönderir; metin, kullanıcının seçtiği dilde burada üretilir.
   const errorInfo = (err) => {
@@ -404,7 +408,7 @@
             <div><div class="stat-value">{{ job.saved }}</div><div class="stat-label">{{ $t('playlist.saved') }}</div></div>
             <div><div class="stat-value">{{ failedCount }}</div><div class="stat-label">{{ $t('playlist.failed') }}</div></div>
             <v-spacer></v-spacer>
-            <v-btn v-if="!running" outlined small class="btn-quiet" @click="openFolder">
+            <v-btn v-if="!running" outlined small class="btn-quiet desktop-only" @click="openFolder">
               <v-icon left small aria-hidden="true">folder_open</v-icon>{{ $t('playlist.open') }}
             </v-btn>
           </div>
@@ -448,7 +452,7 @@
     methods: {
       async paste() {
         try {
-          this.url = (await navigator.clipboard.readText()).trim();
+          this.url = (android ? android.clipboardText() : await navigator.clipboard.readText()).trim();
         } catch (err) {
           notify(this.$t('home.pasteFailed'), 'warning');
         }
@@ -577,7 +581,7 @@
         <h1 class="page-title">{{ $t('files.title') }}</h1>
         <p class="page-sub">{{ $t('files.sub') }}</p>
         <div class="actions file-actions">
-          <v-btn @click="openFolder"><v-icon left small aria-hidden="true">folder_open</v-icon>{{ $t('files.open') }}</v-btn>
+          <v-btn class="desktop-only" @click="openFolder"><v-icon left small aria-hidden="true">folder_open</v-icon>{{ $t('files.open') }}</v-btn>
           <v-btn v-if="files.length" id="clear-list" @click="hide(files)"><v-icon left small aria-hidden="true">playlist_remove</v-icon>{{ $t('files.clearList') }}</v-btn>
           <v-btn v-if="hidden" id="restore-list" @click="restore"><v-icon left small aria-hidden="true">restore</v-icon>{{ $t('files.restore', { count: hidden }) }}</v-btn>
           <v-spacer></v-spacer>
@@ -590,7 +594,7 @@
               {{ file.name }}
               <div class="small muted num"><span v-if="file.folder">{{ file.folder }} · </span>{{ size(file.size) }} · {{ time(file.modified) }}</div>
             </div>
-            <v-btn icon small class="round-button" :title="$t('files.show')" :aria-label="$t('files.show') + ': ' + file.name" @click="reveal(file.path)"><v-icon small aria-hidden="true">folder_open</v-icon></v-btn>
+            <v-btn icon small class="round-button desktop-only" :title="$t('files.show')" :aria-label="$t('files.show') + ': ' + file.name" @click="reveal(file.path)"><v-icon small aria-hidden="true">folder_open</v-icon></v-btn>
             <v-btn icon small class="round-button" data-action="hide" :title="$t('files.remove')" :aria-label="$t('files.remove') + ': ' + file.name" @click="hide([file])"><v-icon small aria-hidden="true">playlist_remove</v-icon></v-btn>
             <v-btn icon small class="round-button round-danger" data-action="delete" :title="$t('files.delete')" :aria-label="$t('files.delete') + ': ' + file.name" @click="pending = [file]"><v-icon small aria-hidden="true">delete_outline</v-icon></v-btn>
           </div>
@@ -688,8 +692,9 @@
           <div class="pad" style="border-bottom: 1px solid var(--border)">
             <label class="setting-name" for="folder-input">{{ $t('settings.folder') }}</label>
             <div class="small muted mb-2">{{ $t('settings.folderHint') }}</div>
-            <v-text-field id="folder-input" v-model="folder" outlined dense hide-details></v-text-field>
-            <div class="actions" style="margin-top: 12px">
+            <div class="folder-path mobile-only">{{ folder }}</div>
+            <v-text-field id="folder-input" v-model="folder" class="desktop-only" outlined dense hide-details></v-text-field>
+            <div class="actions desktop-only" style="margin-top: 12px">
               <v-btn depressed color="primary" @click="save">{{ $t('settings.save') }}</v-btn>
               <v-btn v-if="canChoose" outlined class="btn-quiet" @click="choose">{{ $t('settings.choose') }}</v-btn>
               <v-btn outlined class="btn-quiet" @click="openFolder">{{ $t('settings.open') }}</v-btn>
@@ -823,6 +828,12 @@
     },
   };
 
+  // Android'de başka bir uygulamadan "Paylaş" ile gelen bağlantıyı uygulama bu işlevle iletir.
+  window.receiveSharedLink = (link) => {
+    store.commit('url', String(link || '').trim());
+    if (router.currentRoute.path !== '/') router.push('/');
+  };
+
   const router = new VueRouter({
     mode: 'hash',
     routes: [
@@ -900,7 +911,7 @@
             <div v-if="!compact" class="sidebar-foot">
               <div class="label">{{ $t('settings.folder') }}</div>
               <div class="path" :title="folder">{{ folder }}</div>
-              <v-btn small text class="px-1" @click="reveal()">{{ $t('settings.open') }}</v-btn>
+              <v-btn small text class="px-1 desktop-only" @click="reveal()">{{ $t('settings.open') }}</v-btn>
             </div>
           </template>
         </v-navigation-drawer>
@@ -915,7 +926,7 @@
             <span id="snack-text" class="break">{{ toast && toast.text }}</span>
           </div>
           <template v-slot:action="{ attrs }">
-            <v-btn v-if="toast && toast.path" text small dark v-bind="attrs" @click="reveal(toast.path)">{{ $t('show') }}</v-btn>
+            <v-btn v-if="toast && toast.path" class="desktop-only" text small dark v-bind="attrs" @click="reveal(toast.path)">{{ $t('show') }}</v-btn>
             <v-btn icon small dark v-bind="attrs" :aria-label="$t('close')" @click="showToast = false"><v-icon small aria-hidden="true">close</v-icon></v-btn>
           </template>
         </v-snackbar>
