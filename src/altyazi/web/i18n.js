@@ -3,7 +3,7 @@ window.APP_MESSAGES = {
     nav: { download: 'Altyazı indir', files: 'İndirilenler', sites: 'Kaynaklar', guide: "Kılavuz", settings: 'Ayarlar', skip: 'Ana içeriğe geç', main: 'Ana menü' },
     home: {
       title: 'Altyazı indir', sub: 'Bir video veya oynatma listesi bağlantısı yapıştırın.',
-      label: 'Video bağlantısı', placeholder: 'https://', paste: 'Panodan yapıştır', fetch: 'Getir', loading: 'Video bilgileri alınıyor…',
+      label: 'Video bağlantısı', placeholder: 'https://', paste: 'Panodan yapıştır', fetch: 'Getir', clear: 'Temizle', loading: 'Video bilgileri alınıyor…',
       pasteFailed: 'Pano okunamadı. Ctrl+V ile yapıştırın.', retry: 'Yeniden dene', refreshRetry: 'Yenile ve yeniden dene', refreshList: 'Dil listesini yenile', refreshed: 'Dil listesi yenilendi',
       step1: 'Bağlantıyı yapıştırın', step1d: 'Video, oynatma listesi veya kanal bağlantısı olabilir.',
       step2: 'Dil ve biçim seçin', step2d: 'Gerçek altyazılar, otomatik altyazılar ve çeviriler ayrı listelenir.',
@@ -79,7 +79,7 @@ window.APP_MESSAGES = {
         { title: "Tek videonun altyazısını indirme", items: [
           "Videonun bağlantısını tarayıcıdan kopyalayın.",
           "Altyazı indir sayfasında bağlantıyı kutuya yapıştırın ya da Panodan yapıştır düğmesine basın.",
-          "Getir düğmesine basın; program videonun adını ve altyazı dillerini listeler.",
+          "Getir düğmesine basın; program videonun adını ve altyazı dillerini listeler. Temizle düğmesi getirilen videoyu kaldırıp sayfayı boşaltır.",
           "Üstten bir biçim seçin, ardından istediğiniz dilin satırındaki İndir düğmesine basın.",
           "Dosya indirme klasörüne kaydedilir. Aynı adda bir dosya varsa üzerine yazılmaz, yeni dosyaya ayrı bir ad verilir.",
         ] },
@@ -137,7 +137,7 @@ window.APP_MESSAGES = {
     nav: { download: 'Binnivîs daxe', files: 'Daxistin', sites: 'Çavkanî', guide: "Rêber", settings: 'Mîheng', skip: 'Derbasî naveroka sereke bibe', main: 'Menûya sereke' },
     home: {
       title: 'Binnivîs daxe', sub: 'Girêdana vîdyoyekê an lîsteya lêdanê pêve bike.',
-      label: 'Girêdana vîdyoyê', placeholder: 'https://', paste: 'Ji panoyê pêve bike', fetch: 'Bîne', loading: 'Agahiyên vîdyoyê têne girtin…',
+      label: 'Girêdana vîdyoyê', placeholder: 'https://', paste: 'Ji panoyê pêve bike', fetch: 'Bîne', clear: 'Paqij bike', loading: 'Agahiyên vîdyoyê têne girtin…',
       pasteFailed: 'Pano nehat xwendin. Ctrl+V bi kar bîne.', retry: 'Dîsa biceribîne', refreshRetry: 'Nû bike û dîsa biceribîne', refreshList: 'Lîsteya zimanan nû bike', refreshed: 'Lîsteya zimanan hat nûkirin',
       step1: 'Girêdanê pêve bike', step1d: 'Dikare girêdana vîdyo, lîsteya lêdanê an kanalê be.',
       step2: 'Ziman û formatê hilbijêre', step2d: 'Binnivîs, binnivîsên xweber û werger cuda têne nîşandan.',
@@ -213,7 +213,7 @@ window.APP_MESSAGES = {
         { title: "Daxistina binnivîsa vîdyoyekê", items: [
           "Girêdana vîdyoyê ji gerokê kopî bike.",
           "Di rûpela Binnivîs daxe de girêdanê di qutiyê de pêve bike an li bişkoka Ji panoyê pêve bike bixe.",
-          "Li bişkoka Bîne bixe; bername navê vîdyoyê û zimanên binnivîsê nîşan dide.",
+          "Li bişkoka Bîne bixe; bername navê vîdyoyê û zimanên binnivîsê nîşan dide. Bişkoka Paqij bike vîdyoya anî radike û rûpelê vala dike.",
           "Li jor formatekê hilbijêre, paşê di rêza zimanê ku tu dixwazî de li bişkoka Daxe bixe.",
           "Pel di peldanka daxistinê de tê tomarkirin. Heke pelek bi heman navî hebe, li ser nayê nivîsandin; navekî cuda li pelê nû tê kirin.",
         ] },
@@ -271,7 +271,7 @@ window.APP_MESSAGES = {
     nav: { download: 'Get subtitles', files: 'Downloads', sites: 'Sources', guide: "Guide", settings: 'Settings', skip: 'Skip to main content', main: 'Main menu' },
     home: {
       title: 'Get subtitles', sub: 'Paste a link to a video or playlist.',
-      label: 'Video link', placeholder: 'https://', paste: 'Paste from clipboard', fetch: 'Fetch', loading: 'Getting video details…',
+      label: 'Video link', placeholder: 'https://', paste: 'Paste from clipboard', fetch: 'Fetch', clear: 'Clear', loading: 'Getting video details…',
       pasteFailed: 'Could not read the clipboard. Use Ctrl+V.', retry: 'Try again', refreshRetry: 'Refresh and try again', refreshList: 'Refresh language list', refreshed: 'Language list refreshed',
       step1: 'Paste the link', step1d: 'It can be a video, playlist or channel link.',
       step2: 'Pick language and format', step2d: 'Subtitles, automatic captions and translations are listed separately.',
@@ -347,7 +347,7 @@ window.APP_MESSAGES = {
         { title: "Downloading subtitles for one video", items: [
           "Copy the video link from your browser.",
           "On the Get subtitles page, paste the link into the box or press Paste from clipboard.",
-          "Press Fetch; the program lists the video name and its subtitle languages.",
+          "Press Fetch; the program lists the video name and its subtitle languages. Clear removes the fetched video and empties the page.",
           "Pick a format at the top, then press Download on the row of the language you want.",
           "The file is saved to the download folder. An existing file with the same name is not overwritten; the new file gets a different name.",
         ] },

@@ -13,7 +13,7 @@ is available in Turkish, Kurdish (Kurmancî) and English and includes a built-in
 | --- | --- | --- |
 | Windows 10/11 (64 bit) | `AltyaziIndirici_<sürüm>_x64-setup.exe` | WebView2 Runtime gerekir; Windows 11'de hazır gelir, yoksa kurulum sırasında indirilir |
 | Linux (64 bit) | `.deb` (Debian, Ubuntu, Mint) veya `.AppImage` (diğer dağıtımlar) | `.deb`: `sudo apt install ./dosya.deb`. AppImage: dosyayı çalıştırılabilir yapıp açın |
-| Android 11 ve üstü | `.apk` | Telefonda "bilinmeyen kaynaklardan yükleme"ye izin vermek gerekir |
+| Android 7 ve üstü | `.apk` | Telefonda "bilinmeyen kaynaklardan yükleme"ye izin vermek gerekir; Android 10 ve öncesinde depolama izni istenir |
 
 Dosyalar imzalı değildir. Windows SmartScreen uyarı gösterirse "Ek bilgi" ve ardından "Yine de
 çalıştır" seçilir. Dosyayı güvendiğiniz bir yerden aldığınızdan emin olun ya da programı
@@ -60,7 +60,7 @@ program içindeki **Kılavuz** sayfasındadır.
 - Ayarlar ve indirilenler listesi yalnızca kendi cihazınızda tutulur: Windows'ta
   `%APPDATA%\AltyaziIndirici`, Linux'ta `~/.config/AltyaziIndirici`, Android'de uygulamanın kendi
   alanı. Masaüstünde programı kaldırdıktan sonra bu klasörü silebilirsiniz.
-- Android uygulaması yalnızca internet izni ister; dosyaları izin istemeden İndirilenler
+- Android uygulaması internet izni ister; Android 11 ve üstünde dosyaları izin istemeden İndirilenler
   klasörüne yazar ve başka dosyalarınıza erişemez.
 
 ## Sınırlar

@@ -19,8 +19,9 @@ android {
 
     defaultConfig {
         applicationId "org.cybergah.altyazi"
-        // Android 11 ve üstü: uygulama İndirilenler klasörüne izin istemeden yazabilir.
-        minSdk 30
+        // Android 7 ve üstü. Android 11'den itibaren İndirilenler klasörüne izinsiz yazılır;
+        // daha eski sürümlerde depolama izni istenir (bkz. MainActivity).
+        minSdk 24
         targetSdk 35
         versionCode 1
         versionName appVersion

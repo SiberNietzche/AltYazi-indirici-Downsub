@@ -1,12 +1,15 @@
 package org.cybergah.altyazi;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.Gravity;
@@ -36,6 +39,7 @@ import java.util.regex.Pattern;
 public class MainActivity extends Activity {
     private static final String LOCAL_HOST = "127.0.0.1";
     private static final Pattern LINK = Pattern.compile("https?://\\S+");
+    private static final int STORAGE_REQUEST = 1;
 
     private WebView web;
     private ProgressBar progress;
@@ -86,7 +90,32 @@ public class MainActivity extends Activity {
         });
 
         pendingLink = sharedLink(getIntent());
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R
+                && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            // Android 10 ve öncesinde İndirilenler klasörü için izin gerekir; yanıt gelince motor başlar.
+            requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_REQUEST);
+        } else {
+            launchEngine();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == STORAGE_REQUEST) launchEngine();
+    }
+
+    private void launchEngine() {
         new Thread(this::startEngine, "engine-start").start();
+    }
+
+    /** İndirilenler/AltyaziIndirici; eski Android'de izin verilmediyse uygulamanın kendi klasörü. */
+    private File downloadFolder() {
+        boolean allowed = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                || checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        File base = allowed ? Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) : getExternalFilesDir(null);
+        if (base == null) base = getFilesDir();
+        return new File(base, "AltyaziIndirici");
     }
 
     /** Python'un ve yt-dlp'nin yüklenmesi birkaç saniye sürer; bu yüzden arka planda yapılır. */
@@ -94,7 +123,7 @@ public class MainActivity extends Activity {
         try {
             if (!Python.isStarted()) Python.start(new AndroidPlatform(getApplicationContext()));
             File data = new File(getFilesDir(), "config");
-            File downloads = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "AltyaziIndirici");
+            File downloads = downloadFolder();
             String url = Python.getInstance().getModule("altyazi.android")
                     .callAttr("start", data.getAbsolutePath(), downloads.getAbsolutePath()).toString();
             runOnUiThread(() -> web.loadUrl(url));

@@ -6,8 +6,10 @@
   const tauri = window.__TAURI__ || null; // Yalnızca Tauri kabuğunda tanımlıdır
   // Android uygulamasında sayfa bir WebView içinde çalışır; AndroidHost'u uygulama sağlar.
   // Orada dosya yöneticisi ve klasör seçimi yoktur: "desktop-only" öğeler gizlenir.
+  // Telefonda hareketli arka plan ve bulanıklık ağır kalır; yerine sabit ışık kullanılır (style.css).
   const android = window.AndroidHost || null;
-  if (android || /Android/.test(navigator.userAgent)) document.documentElement.classList.add('platform-android');
+  const mobile = !!android || /Android/.test(navigator.userAgent);
+  if (mobile) document.documentElement.classList.add('platform-android');
   const api = axios.create({ baseURL: '/api', headers: { 'X-App-Token': token }, timeout: 0 });
   // Sunucu hata kodu gönderir; metin, kullanıcının seçtiği dilde burada üretilir.
   const errorInfo = (err) => {
@@ -340,7 +342,10 @@
         return this.failedCount ? this.$t('playlist.partial') : this.$t('playlist.finished');
       },
     },
-    beforeDestroy() { clearInterval(this.timer); },
+    beforeDestroy() {
+      clearInterval(this.timer);
+      if (this.running) this.cancel(); // Liste ekrandan kaldırılırsa süren indirme de durdurulur
+    },
     methods: {
       formatDuration,
       errorMessage,
@@ -440,7 +445,7 @@
 
   const Home = {
     components: { VideoResult, PlaylistPanel },
-    data() { return { loading: false, error: null }; },
+    data() { return { loading: false, error: null, mobile }; },
     computed: {
       url: {
         get() { return this.$store.state.url; },
@@ -456,6 +461,12 @@
         } catch (err) {
           notify(this.$t('home.pasteFailed'), 'warning');
         }
+      },
+      // Getirilen videoyu, hatayı ve bağlantıyı kaldırıp sayfayı ilk haline döndürür.
+      clear() {
+        this.error = null;
+        this.url = '';
+        this.$store.commit('video', null);
       },
       async fetchInfo() {
         if (!this.url.trim() || this.loading) return;
@@ -481,11 +492,14 @@
           <label class="field-label" for="url-input">{{ $t('home.label') }}</label>
           <div class="url-row">
             <v-text-field v-model="url" id="url-input" :placeholder="$t('home.placeholder')" prepend-inner-icon="link"
-                          outlined dense hide-details clearable autofocus></v-text-field>
+                          outlined dense hide-details clearable :autofocus="!mobile"></v-text-field>
             <v-btn outlined height="40" class="btn-quiet" @click="paste">
               <v-icon left small aria-hidden="true">content_paste</v-icon>{{ $t('home.paste') }}
             </v-btn>
             <v-btn id="fetch-button" type="submit" depressed color="primary" height="40" :loading="loading" :disabled="!url">{{ $t('home.fetch') }}</v-btn>
+            <v-btn v-if="(video || error) && !loading" id="clear-button" outlined height="40" class="btn-quiet" @click="clear">
+              <v-icon left small aria-hidden="true">close</v-icon>{{ $t('home.clear') }}
+            </v-btn>
           </div>
         </v-form>
 
@@ -852,7 +866,7 @@
     router,
     vuetify,
     components: { SplashBackground },
-    data() { return { showToast: false, ready: false }; },
+    data() { return { showToast: false, ready: false, mobile }; },
     computed: {
       toast() { return this.$store.state.toast; },
       theme() { return this.$store.state.settings.theme; },
@@ -891,7 +905,7 @@
     },
     template: `
       <v-app :class="{ compact }" :style="{ visibility: ready ? 'visible' : 'hidden' }">
-        <splash-background></splash-background>
+        <splash-background v-if="!mobile"></splash-background>
         <button class="skip" type="button" @click="focusMain">{{ $t('nav.skip') }}</button>
         <v-navigation-drawer app permanent class="sidebar" width="224" mini-variant-width="64" :mini-variant="compact">
           <div class="brand">
