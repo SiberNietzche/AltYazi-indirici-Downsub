@@ -13,6 +13,11 @@ def keystoreFile = rootProject.file("keystore.properties")
 def keystore = new Properties()
 if (keystoreFile.exists()) keystoreFile.withInputStream { keystore.load(it) }
 
+// Çıktı adı diğer sistemlerle aynı düzendedir: AltyaziIndirici_<sürüm>_android-<tür>.apk
+base {
+    archivesName = "AltyaziIndirici_${appVersion}_android"
+}
+
 android {
     namespace 'org.cybergah.altyazi'
     compileSdk 35

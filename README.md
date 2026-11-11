@@ -11,9 +11,9 @@ is available in Turkish, Kurdish (Kurmancî) and English and includes a built-in
 
 | Sistem | Dosya | Not |
 | --- | --- | --- |
-| Windows 10/11 (64 bit) | `AltyaziIndirici_<sürüm>_x64-setup.exe` | WebView2 Runtime gerekir; Windows 11'de hazır gelir, yoksa kurulum sırasında indirilir |
-| Linux (64 bit) | `.deb` (Debian, Ubuntu, Mint) veya `.AppImage` (diğer dağıtımlar) | `.deb`: `sudo apt install ./dosya.deb`. AppImage: dosyayı çalıştırılabilir yapıp açın |
-| Android 7 ve üstü | `.apk` | Telefonda "bilinmeyen kaynaklardan yükleme"ye izin vermek gerekir; Android 10 ve öncesinde depolama izni istenir |
+| Windows 10/11 (64 bit) | `AltyaziIndirici_<sürüm>_windows.exe` | WebView2 Runtime gerekir; Windows 11'de hazır gelir, yoksa kurulum sırasında indirilir |
+| Linux (64 bit) | `AltyaziIndirici_<sürüm>_linux.deb` (Debian, Ubuntu, Mint) veya `AltyaziIndirici_<sürüm>_linux.AppImage` (diğer dağıtımlar) | `.deb`: `sudo apt install ./dosya.deb`. AppImage: dosyayı çalıştırılabilir yapıp açın |
+| Android 7 ve üstü | `AltyaziIndirici_<sürüm>_android.apk` | Telefonda "bilinmeyen kaynaklardan yükleme"ye izin vermek gerekir; Android 10 ve öncesinde depolama izni istenir |
 
 Dosyalar imzalı değildir. Windows SmartScreen uyarı gösterirse "Ek bilgi" ve ardından "Yine de
 çalıştır" seçilir. Dosyayı güvendiğiniz bir yerden aldığınızdan emin olun ya da programı
@@ -89,7 +89,8 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 Betik testleri çalıştırır, Python motorunu `altyazi-server` adlı yan süreç olarak paketler ve
 `src-tauri\target\release\altyazi-indirici.exe` ile `bundle\nsis` altındaki kurulum dosyasını
-üretir. Kurulum dosyası istenmiyorsa `-NoBundle` eklenir.
+üretir; kurulum dosyası `dist\AltyaziIndirici_<sürüm>_windows.exe` adıyla da kopyalanır. Kurulum dosyası
+istenmiyorsa `-NoBundle` eklenir.
 
 ### Linux
 
@@ -99,7 +100,8 @@ Python 3.11+, Rust, Node.js ve Tauri'nin sistem kitaplıkları gerekir (liste `b
 ./build.sh
 ```
 
-Çıktı `src-tauri/target/release/bundle` altında `.deb` ve `.AppImage` olarak oluşur.
+Çıktı `dist` klasöründe `AltyaziIndirici_<sürüm>_linux.deb` ve `AltyaziIndirici_<sürüm>_linux.AppImage`
+olarak oluşur.
 
 ### Android
 
@@ -111,7 +113,7 @@ cd android
 ./gradlew assembleDebug        # Windows'ta: gradlew.bat assembleDebug
 ```
 
-Çıktı `android/app/build/outputs/apk/debug/app-debug.apk` olur. Yayın sürümünü kendi anahtarınızla
+Çıktı `android/app/build/outputs/apk/debug/AltyaziIndirici_<sürüm>_android-debug.apk` olur. Yayın sürümünü kendi anahtarınızla
 imzalamak için `android/keystore.properties` dosyasına `storeFile`, `storePassword`, `keyAlias` ve
 `keyPassword` yazıp `assembleRelease` çalıştırın; bu dosya ve anahtar depoya girmez.
 

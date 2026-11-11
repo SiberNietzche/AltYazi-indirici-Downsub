@@ -54,7 +54,13 @@ if ($NoBundle) {
     $failed = $LASTEXITCODE -ne 0
     Pop-Location
     if ($failed) { Write-Host 'FAILED: tauri build'; exit 1 }
-    Get-ChildItem src-tauri\target\release\bundle\nsis\*.exe | Select-Object FullName, Length
+    # Dağıtım dosyası her sistemde aynı düzende adlandırılıp dist klasörüne kopyalanır:
+    # AltyaziIndirici_<sürüm>_<sistem>.<uzantı>
+    $version = (Get-Content src-tauri\tauri.conf.json -Raw -Encoding UTF8 | ConvertFrom-Json).version
+    New-Item -ItemType Directory -Force dist | Out-Null
+    $setup = Get-ChildItem src-tauri\target\release\bundle\nsis\*-setup.exe | Sort-Object LastWriteTime | Select-Object -Last 1
+    Copy-Item $setup.FullName "dist\AltyaziIndirici_${version}_windows.exe" -Force
+    Get-Item "dist\AltyaziIndirici_${version}_windows.exe" | Select-Object FullName, Length
 }
 
 Get-Item src-tauri\target\release\altyazi-indirici.exe |

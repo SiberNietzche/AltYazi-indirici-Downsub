@@ -39,6 +39,12 @@ if [ "${1:-}" = "--no-bundle" ]; then
   cargo build --release --manifest-path src-tauri/Cargo.toml
 else
   (cd src-tauri && npx --yes "@tauri-apps/cli@2" build)
-  ls -l src-tauri/target/release/bundle/deb/*.deb src-tauri/target/release/bundle/appimage/*.AppImage
+  # Dağıtım dosyaları her sistemde aynı düzende adlandırılıp dist klasörüne kopyalanır:
+  # AltyaziIndirici_<sürüm>_<sistem>.<uzantı>
+  version=$(sed -n 's/.*"version": "\([^"]*\)".*/\1/p' src-tauri/tauri.conf.json | head -1)
+  mkdir -p dist
+  cp src-tauri/target/release/bundle/deb/*.deb "dist/AltyaziIndirici_${version}_linux.deb"
+  cp src-tauri/target/release/bundle/appimage/*.AppImage "dist/AltyaziIndirici_${version}_linux.AppImage"
+  ls -l "dist/AltyaziIndirici_${version}_linux.deb" "dist/AltyaziIndirici_${version}_linux.AppImage"
 fi
 ls -l src-tauri/target/release/altyazi-indirici
