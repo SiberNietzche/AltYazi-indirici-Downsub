@@ -1,4 +1,8 @@
-"""Uygulama girişi: yerel sunucuyu başlatır ve WebView2 penceresini açar."""
+"""Motorun girişi: yerel sunucuyu başlatır.
+
+Tauri kabuğu bu programı ``--serve --exit-with-stdin`` ile yan süreç olarak çalıştırır.
+Seçeneksiz çalıştırıldığında (geliştirme) arayüz varsayılan tarayıcıda açılır.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +12,6 @@ import sys
 import threading
 import webbrowser
 
-from . import APP_NAME
 from .server import AppContext, create_server
 
 
@@ -35,8 +38,8 @@ def _exit_when_stdin_closes() -> None:
 def main() -> int:
     stdin = sys.stdin  # _guard_streams öncesi: pencereli exe'de None olabilir
     _guard_streams()
-    parser = argparse.ArgumentParser(prog="AltyaziIndirici")
-    parser.add_argument("--serve", action="store_true", help="Pencere açmadan yalnızca yerel sunucuyu çalıştırır")
+    parser = argparse.ArgumentParser(prog="altyazi-server")
+    parser.add_argument("--serve", action="store_true", help="Tarayıcı açmadan yalnızca yerel sunucuyu çalıştırır")
     parser.add_argument("--exit-with-stdin", action="store_true", help="Standart girdi kapanınca sunucuyu kapatır (Tauri kabuğu kullanır)")
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--token", help="Sınama için sabit erişim anahtarı")
@@ -46,30 +49,15 @@ def main() -> int:
     server = create_server(context, args.port)
     url = f"http://127.0.0.1:{server.server_address[1]}/?token={context.token}"
 
-    if args.serve:
-        if args.exit_with_stdin and stdin is not None:
-            threading.Thread(target=_exit_when_stdin_closes, daemon=True).start()
-        print(url, flush=True)
-        server.serve_forever()
-        return 0
-
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    try:
-        import webview
-
-        window = webview.create_window(APP_NAME, url, width=1100, height=780, min_size=(760, 560))
-
-        def choose_folder(initial: str) -> str | None:
-            result = window.create_file_dialog(webview.FileDialog.FOLDER, directory=initial)
-            return result[0] if result else None
-
-        context.choose_folder = choose_folder
-        webview.start()
-    except Exception:  # WebView2 açılamazsa uygulama tarayıcıda çalışmaya devam eder
+    if args.serve and args.exit_with_stdin and stdin is not None:
+        threading.Thread(target=_exit_when_stdin_closes, daemon=True).start()
+    print(url, flush=True)
+    if not args.serve:
         webbrowser.open(url)
-        threading.Event().wait()
-    finally:
-        server.shutdown()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
     return 0
 
 

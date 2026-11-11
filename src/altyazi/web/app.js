@@ -36,7 +36,7 @@
 
   const store = new Vuex.Store({
     state: {
-      settings: { download_dir: '', theme: 'ocean', locale: 'tr', version: '', can_choose: false },
+      settings: { download_dir: '', theme: 'ocean', locale: 'tr', version: '' },
       video: null, url: '', toast: null, files: [], hiddenFiles: 0,
     },
     mutations: {
@@ -654,7 +654,7 @@
         get() { return this.settings.locale; },
         set(value) { this.$store.dispatch('saveSettings', { locale: value }).catch(notifyError); },
       },
-      canChoose() { return this.settings.can_choose || !!tauri; },
+      canChoose() { return !!tauri; }, // Klasör seçiciyi Tauri kabuğu sağlar
       themes() { return window.APP_THEMES; },
       locales() { return [{ value: 'tr', text: 'Türkçe' }, { value: 'ku', text: 'Kurdî' }, { value: 'en', text: 'English' }]; },
     },
@@ -670,15 +670,9 @@
       },
       async choose() {
         try {
-          if (tauri) {
-            // Tauri kabuğunda klasör seçiciyi kabuk açar; seçilen yol olağan ayar olarak kaydedilir.
-            const picked = await tauri.core.invoke('choose_folder', { initial: this.settings.download_dir });
-            if (picked) await this.$store.dispatch('saveSettings', { download_dir: picked });
-            return;
-          }
-          const { data } = await api.post('/choose-folder', {});
-          this.$store.commit('settings', data);
-          refreshFiles();
+          // Seçilen yol olağan ayar olarak kaydedilir.
+          const picked = await tauri.core.invoke('choose_folder', { initial: this.settings.download_dir });
+          if (picked) await this.$store.dispatch('saveSettings', { download_dir: picked });
         } catch (err) {
           notifyError(err);
         }

@@ -85,7 +85,6 @@ class AppContext:
         self.library = Library(app_data_dir() / "files.json")
         self.jobs = JobManager(self.engine, on_saved=self.library.record_written)
         self.settings = Settings()
-        self.choose_folder = None  # Pencere açılınca main.py atar
 
 
 def _open_in_explorer(path: Path) -> None:
@@ -178,7 +177,7 @@ class Handler(BaseHTTPRequestHandler):
 
     # Uç noktalar --------------------------------------------------------
     def _settings_get(self, _body: dict) -> dict:
-        return {**self.context.settings.data, "version": __version__, "can_choose": self.context.choose_folder is not None}
+        return {**self.context.settings.data, "version": __version__}
 
     def _settings_set(self, body: dict) -> dict:
         return self.context.settings.update(body)
@@ -229,12 +228,6 @@ class Handler(BaseHTTPRequestHandler):
             _open_in_explorer(directory)
         return {"ok": True}
 
-    def _choose(self, _body: dict) -> dict:
-        if self.context.choose_folder is None:
-            raise EngineError("no_folder_picker")
-        selected = self.context.choose_folder(str(self.context.settings.directory))
-        return self.context.settings.update({"download_dir": selected}) if selected else dict(self.context.settings.data)
-
     def _files(self, _body: dict) -> dict:
         return self.context.library.listing(self.context.settings.directory)
 
@@ -264,7 +257,6 @@ class Handler(BaseHTTPRequestHandler):
         ("POST", "/api/playlist"): _playlist,
         ("POST", "/api/cancel"): _cancel,
         ("POST", "/api/reveal"): _reveal,
-        ("POST", "/api/choose-folder"): _choose,
         ("GET", "/api/files"): _files,
         ("POST", "/api/files/hide"): _files_hide,
         ("POST", "/api/files/restore"): _files_restore,
