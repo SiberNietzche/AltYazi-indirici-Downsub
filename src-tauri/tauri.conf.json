@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AltyaziIndirici",
+  "version": "1.0.0",
+  "identifier": "com.altyazi.indirici",
+  "build": {
+    "frontendDist": "../src/altyazi/web"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico"],
+    "externalBin": ["binaries/altyazi-server"]
+  }
+}

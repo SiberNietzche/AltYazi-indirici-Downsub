@@ -1,32 +1,33 @@
 /* Renk belirteçleri themes.js tarafından kök öğeye yazılır. Biçim belirteçleri (köşe, çerçeve,
-   yüzey, gölge) burada tanımlıdır; dosyanın sonundaki tasarım şablonları bunları değiştirir. */
+   yüzey, gölge) burada tanımlıdır. Yüzeyler yarı saydam camdır; düğmeler hap biçimindedir ve çerçevelerinden
+   tema renginde ışık akar (dosyanın sonundaki "Işıklı hap çerçeve" bölümü). */
 :root {
   --btn-radius: 999px;
-  --panel-radius: 16px;
-  --field-radius: 20px;
-  --frame-w: 1px;
-  --frame-color: var(--frame);
-  --accent-frame: var(--accent-edge);
+  --panel-radius: 18px;
+  --field-radius: 12px;
+  --frame-w: 2px;
+  --frame-color: transparent;
+  --accent-frame: transparent;
   --danger-frame: var(--danger-edge);
-  --face-bg: linear-gradient(180deg, var(--face-top), var(--face-bottom));
+  --face-bg: color-mix(in srgb, var(--surface) 55%, transparent);
   --accent-bg: linear-gradient(180deg, var(--accent-top), var(--accent-bottom));
   --danger-bg: linear-gradient(180deg, var(--danger-top), var(--danger-bottom));
-  --face-shadow: inset 0 2px 1px var(--bevel), inset 0 -3px 5px rgba(0, 0, 0, .1), 0 3px 0 var(--face-edge), 0 5px 8px var(--drop);
-  --accent-shadow: inset 0 2px 1px rgba(255, 255, 255, .28), inset 0 -3px 5px rgba(0, 0, 0, .12), 0 3px 0 var(--accent-edge), 0 5px 8px var(--drop);
-  --danger-shadow: inset 0 2px 1px rgba(255, 255, 255, .28), inset 0 -3px 5px rgba(0, 0, 0, .12), 0 3px 0 var(--danger-edge), 0 5px 8px var(--drop);
-  --pressed-shadow: inset 0 3px 4px var(--drop), 0 0 0 var(--face-edge);
-  --press-transform: translateY(3px);
-  --panel-bg: var(--surface);
+  --ring-tint: color-mix(in srgb, var(--accent) 26%, var(--surface));
+  --face-shadow: none;
+  --accent-shadow: none;
+  --danger-shadow: none;
+  --pressed-shadow: none;
+  --press-transform: scale(.97);
+  --panel-bg: color-mix(in srgb, var(--surface) 62%, transparent);
   --panel-border-w: 1px;
-  --panel-border-color: var(--border);
-  --panel-shadow: 0 1px 3px var(--drop);
-  --panel-filter: none;
-  --sidebar-bg: var(--sidebar);
+  --panel-border-color: color-mix(in srgb, var(--text) 14%, transparent);
+  --panel-shadow: 0 10px 30px -14px var(--drop);
+  --panel-filter: blur(16px) saturate(1.4);
+  --sidebar-bg: color-mix(in srgb, var(--sidebar) 55%, transparent);
   --app-bg: var(--bg);
-  /* Yazı ayarları: app.js bunları kullanıcının seçimine göre kök öğeye yazar.
-     Bu dosyadaki bütün yazı boyutları --font-scale ile çarpılır. */
-  --font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
-  --font-scale: 1;
+  /* Bu dosyadaki bütün yazı boyutları --font-scale ile çarpılır. */
+  --font-family: Bahnschrift, "Segoe UI", system-ui, sans-serif;
+  --font-scale: 1.12;
 }
 html { overflow-y: auto; background: var(--app-bg); background-attachment: fixed; font-size: calc(16px * var(--font-scale)); }
 
@@ -34,10 +35,8 @@ html { overflow-y: auto; background: var(--app-bg); background-attachment: fixed
 .v-application .text-h5, .v-application .body-2, .v-application .caption {
   font-family: var(--font-family) !important;
 }
-html[data-font-weight="bold"] .v-application { font-weight: 600; }
-html[data-font-weight="bold"] .muted, html[data-font-weight="bold"] .page-sub { font-weight: 500; }
-.font-options { display: grid; grid-template-columns: max-content 1fr; gap: 12px 20px; align-items: center; margin-top: 14px; }
-.font-options .field-label { margin: 0 0 3px; }
+.v-application { font-weight: 600; }
+.muted, .page-sub { font-weight: 500; }
 .v-application.theme--light, .v-application.theme--dark { background: transparent !important; color: var(--text) !important; }
 .v-application a { color: inherit; }
 .v-application .primary--text { color: var(--accent-text) !important; caret-color: var(--accent-text) !important; }
@@ -106,60 +105,6 @@ main:focus, .v-main:focus, [tabindex="-1"]:focus { outline: none; }
 .tab[aria-selected="true"] .count,
 .theme-card[aria-pressed="true"] .theme-check,
 .v-application .v-btn.primary .v-icon { color: var(--on-accent) !important; }
-
-/* Parlak düğme: ana eylem düğmelerinin üzerinden eğik bir ışık şeridi geçer
-   (Magic UI ShinyButton etkisinin React/Tailwind gerektirmeyen CSS karşılığı).
-   Yalnızca "Parlak" ve "Gökkuşağı" şablonlarında çalışır. */
-html[data-design="shine"] .v-application .v-btn.primary:not(.v-btn--icon):not(.v-btn--disabled)::after,
-html[data-design="rainbow"] .v-application .v-btn.primary:not(.v-btn--icon):not(.v-btn--disabled)::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(-75deg, transparent 42%, rgba(255, 255, 255, .38) 50%, transparent 58%) no-repeat;
-  background-size: 250% 100%;
-  background-position: 170% 0;
-  animation: shine 3s ease-in-out infinite;
-}
-@keyframes shine {
-  0% { background-position: 170% 0; }
-  55%, 100% { background-position: -70% 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .v-application .v-btn.primary::after { animation: none !important; }
-}
-
-/* Gökkuşağı düğme: öne çıkan düğmenin (btn-hero) çerçevesinde akan renkler ve altında renk
-   değiştiren ışıltı (Magic UI RainbowButton etkisinin CSS karşılığı). Yalnızca "Gökkuşağı"
-   şablonunda çalışır. Yüzey kuralları !important olduğu için hareket, kayıtlı özel özellikler
-   üzerinden yürütülür. */
-@property --rainbow-x { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
-@property --rainbow-glow { syntax: "<color>"; inherits: false; initial-value: hsl(0, 100%, 63%); }
-html[data-design="rainbow"] .v-application .btn-hero.v-btn:not(.v-btn--disabled) {
-  border: 2px solid transparent !important;
-  background:
-    linear-gradient(180deg, var(--accent-top), var(--accent-bottom)) padding-box,
-    linear-gradient(90deg, hsl(0, 100%, 63%), hsl(90, 100%, 63%), hsl(210, 100%, 63%), hsl(195, 100%, 63%), hsl(270, 100%, 63%), hsl(0, 100%, 63%)) border-box !important;
-  background-size: 100% 100%, 200% 100% !important;
-  background-position: 0 0, var(--rainbow-x) 0 !important;
-  box-shadow: inset 0 2px 1px rgba(255, 255, 255, .28), inset 0 -3px 5px rgba(0, 0, 0, .12), 0 3px 0 var(--accent-edge), 0 7px 16px -2px var(--rainbow-glow) !important;
-  animation: rainbow 4s linear infinite;
-}
-html[data-design="rainbow"] .v-application .btn-hero.v-btn:not(.v-btn--disabled):active {
-  box-shadow: inset 0 3px 4px var(--drop) !important;
-}
-@keyframes rainbow {
-  0% { --rainbow-x: 0%; --rainbow-glow: hsl(0, 100%, 63%); }
-  20% { --rainbow-x: 40%; --rainbow-glow: hsl(90, 100%, 63%); }
-  40% { --rainbow-x: 80%; --rainbow-glow: hsl(210, 100%, 63%); }
-  60% { --rainbow-x: 120%; --rainbow-glow: hsl(195, 100%, 63%); }
-  80% { --rainbow-x: 160%; --rainbow-glow: hsl(270, 100%, 63%); }
-  100% { --rainbow-x: 200%; --rainbow-glow: hsl(0, 100%, 63%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .v-application .btn-hero.v-btn { animation: none !important; }
-}
 
 /* Düğmeler */
 .v-application .v-btn { text-transform: none; letter-spacing: 0; font-weight: 600; }
@@ -346,234 +291,33 @@ input[type="checkbox"] { width: 16px; height: 16px; flex: 0 0 16px; accent-color
 .skip { position: absolute; left: 8px; top: -60px; z-index: 20; padding: 8px 12px; border-radius: 6px; background: var(--accent); color: var(--on-accent); border: 0; font-weight: 600; }
 .skip:focus { top: 8px; }
 
-/* Tasarım sayfası: şablon kartları ve önizleme çubuğu */
-.design-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.design-card { display: flex; flex-direction: column; gap: 4px; padding: 12px; text-align: left; cursor: pointer; color: var(--text); background: var(--panel-bg); border: var(--panel-border-w) solid var(--panel-border-color); border-radius: var(--panel-radius); transition: box-shadow .12s ease-out; }
-.design-card:hover { box-shadow: 0 0 0 1px var(--accent); }
-.design-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
-.design-head { display: flex; align-items: center; gap: 8px; min-height: 22px; margin-top: 6px; }
-.design-name { flex: 1 1 auto; font-size: calc(14px * var(--font-scale)); font-weight: 600; }
-.design-badge { padding: 1px 8px; border-radius: 999px; font-size: calc(11.5px * var(--font-scale)); font-weight: 600; background: var(--accent-soft); color: var(--accent-text); white-space: nowrap; }
-.design-thumb { display: block; padding: 14px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); }
-.mini-panel { display: block; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
-.mini-line { display: block; height: 6px; width: 60%; margin-bottom: 12px; border-radius: 3px; background: var(--skeleton); }
-.mini-row { display: flex; justify-content: flex-end; gap: 8px; padding-bottom: 3px; }
-.mini-btn { width: 44px; height: 18px; border: 1px solid var(--frame); border-radius: 999px; background: linear-gradient(180deg, var(--face-top), var(--face-bottom)); box-shadow: inset 0 1px 0 var(--bevel), 0 2px 0 var(--face-edge); }
-.mini-primary { border-color: var(--accent-edge); background: linear-gradient(180deg, var(--accent-top), var(--accent-bottom)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 2px 0 var(--accent-edge); }
-[data-design-option="shine"] .mini-primary { background: linear-gradient(-75deg, transparent 32%, rgba(255, 255, 255, .6) 50%, transparent 68%), linear-gradient(180deg, var(--accent-top), var(--accent-bottom)); }
-[data-design-option="rainbow"] .mini-primary {
-  border: 2px solid transparent;
-  background: linear-gradient(180deg, var(--accent-top), var(--accent-bottom)) padding-box, linear-gradient(90deg, hsl(0, 100%, 63%), hsl(90, 100%, 63%), hsl(210, 100%, 63%), hsl(270, 100%, 63%)) border-box;
-  box-shadow: 0 2px 0 var(--accent-edge), 0 5px 9px -2px hsl(270, 100%, 63%);
-}
-[data-design-option="flat"] .mini-panel { border-radius: 5px; }
-[data-design-option="flat"] .mini-btn { border-radius: 4px; border-color: var(--border); background: var(--surface); box-shadow: none; }
-[data-design-option="flat"] .mini-primary { border-color: var(--accent); background: var(--accent); }
-[data-design-option="soft"] .mini-panel { border-radius: 14px; box-shadow: 0 8px 16px -8px var(--drop); }
-[data-design-option="soft"] .mini-btn { border-radius: 7px; border-color: var(--border); background: var(--surface); box-shadow: 0 4px 8px -3px var(--drop); }
-[data-design-option="soft"] .mini-primary { border-color: var(--accent-edge); background: linear-gradient(180deg, var(--accent-top), var(--accent-bottom)); box-shadow: 0 4px 8px -3px var(--accent); }
-[data-design-option="glass"] .design-thumb { background: radial-gradient(circle at 15% 10%, color-mix(in srgb, var(--accent) 55%, transparent), transparent 60%), radial-gradient(circle at 90% 95%, color-mix(in srgb, var(--accent) 40%, transparent), transparent 60%), var(--bg); }
-[data-design-option="orbit"] .mini-panel { border-radius: 9px; border-color: color-mix(in srgb, var(--text) 14%, transparent); background: color-mix(in srgb, var(--surface) 55%, transparent); }
-[data-design-option="orbit"] .mini-btn { border: 2px solid transparent; box-shadow: none; background: linear-gradient(var(--surface), var(--surface)) padding-box, conic-gradient(from 200deg, var(--frame) 0 55%, var(--accent) 85%, var(--frame) 100%) border-box; }
-[data-design-option="orbit"] .mini-primary { background: linear-gradient(180deg, var(--accent-top), var(--accent-bottom)) padding-box, conic-gradient(from 20deg, var(--accent-edge) 0 55%, #fff 85%, var(--accent-edge) 100%) border-box; }
-[data-design-option="pill"] .mini-btn { border: 2px solid var(--accent); box-shadow: none; background: transparent; }
-[data-design-option="pill"] .mini-primary { background: color-mix(in srgb, var(--accent) 26%, transparent); }
-[data-design-option="ring"] .mini-btn { border: 2px solid transparent; box-shadow: none; background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(90deg, var(--accent), var(--bg), var(--accent)) border-box; }
-[data-design-option="ring"] .mini-primary { background: linear-gradient(color-mix(in srgb, var(--accent) 26%, var(--surface)), color-mix(in srgb, var(--accent) 26%, var(--surface))) padding-box, linear-gradient(90deg, var(--accent), var(--bg), var(--accent)) border-box; }
-[data-design-option="arrow"] .mini-panel { border-radius: 9px; border-color: color-mix(in srgb, var(--text) 14%, transparent); background: color-mix(in srgb, var(--surface) 55%, transparent); }
-[data-design-option="arrow"] .mini-btn { border: 0; border-radius: 4px; box-shadow: none; background: var(--accent-soft); }
-[data-design-option="arrow"] .mini-primary { background: radial-gradient(circle at 80% 50%, var(--accent) 0 5px, transparent 6px), var(--accent-soft); }
-[data-design-option="wave"] .design-thumb, [data-design-option="orbit"] .design-thumb, [data-design-option="arrow"] .design-thumb { background: linear-gradient(172deg, transparent 30%, rgba(56, 189, 248, .6) 42%, rgba(129, 140, 248, .6) 52%, rgba(192, 132, 252, .6) 62%, rgba(232, 121, 249, .6) 70%, transparent 82%), var(--bg); }
-[data-design-option="glass"] .mini-panel, [data-design-option="wave"] .mini-panel { border-radius: 9px; border-color: color-mix(in srgb, var(--text) 14%, transparent); background: color-mix(in srgb, var(--surface) 55%, transparent); }
-[data-design-option="glass"] .mini-btn, [data-design-option="wave"] .mini-btn { border-radius: 6px; border-color: color-mix(in srgb, var(--text) 40%, transparent); background: color-mix(in srgb, var(--surface) 55%, transparent); box-shadow: none; }
-[data-design-option="glass"] .mini-primary, [data-design-option="wave"] .mini-primary { border-color: var(--accent-edge); background: linear-gradient(180deg, var(--accent-top), var(--accent-bottom)); }
-[data-design-option="brutal"] .mini-panel { border: 2px solid var(--text); border-radius: 0; box-shadow: 3px 3px 0 var(--text); }
-[data-design-option="brutal"] .mini-btn { border: 2px solid var(--text); border-radius: 0; background: var(--surface); box-shadow: 2px 2px 0 var(--text); }
-[data-design-option="brutal"] .mini-primary { background: var(--accent); }
-.sample-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 14px; }
-.sample-row .v-input { flex: 1 1 220px; }
-.sample-tabs { padding: 0; border-bottom: 0; }
-.preview-bar { position: fixed; top: 12px; right: 16px; z-index: 30; display: flex; align-items: center; gap: 10px; padding: 8px 12px 5px 14px; background: var(--surface); border: 1px solid var(--accent); border-radius: 14px; box-shadow: 0 10px 26px -10px var(--drop), 0 1px 3px var(--drop); font-size: calc(13px * var(--font-scale)); font-weight: 600; color: var(--text); }
-.preview-bar > .v-icon, .preview-bar > span { margin-bottom: 3px; }
-.preview-bar > .v-icon { color: var(--accent-text); }
-
-/* Tasarım şablonları. "relief" (Kabartma) yukarıdaki varsayılan biçim belirteçleridir;
-   "shine" ve "rainbow" buna yalnızca düğme hareketlerini ekler.
-   Yeni şablon eklerken kimliğini themes.js ve server.py içindeki listelere de ekleyin. */
-html[data-design="flat"] {
-  --btn-radius: 8px; --panel-radius: 10px; --field-radius: 8px;
-  --frame-color: var(--border); --accent-frame: var(--accent); --danger-frame: var(--danger);
-  --face-bg: var(--surface); --accent-bg: var(--accent); --danger-bg: var(--danger);
-  --face-shadow: none; --accent-shadow: none; --danger-shadow: none; --pressed-shadow: none;
-  --press-transform: scale(.97);
-  --panel-shadow: none;
-}
-html[data-design="soft"] {
-  --btn-radius: 14px; --panel-radius: 22px; --field-radius: 14px;
-  --frame-color: var(--border);
-  --face-bg: var(--surface);
-  --face-shadow: 0 1px 2px var(--drop), 0 8px 18px -8px var(--drop);
-  --accent-shadow: 0 1px 2px var(--drop), 0 8px 18px -6px var(--accent);
-  --danger-shadow: 0 1px 2px var(--drop), 0 8px 18px -6px var(--danger);
-  --pressed-shadow: inset 0 2px 5px var(--drop);
-  --press-transform: scale(.98);
-  --panel-shadow: 0 1px 3px var(--drop), 0 14px 34px -18px var(--drop);
-}
-html[data-design="glass"], html[data-design="wave"], html[data-design="orbit"], html[data-design="arrow"], html[data-design="pill"], html[data-design="ring"] {
-  --btn-radius: 12px; --panel-radius: 18px; --field-radius: 12px;
-  --frame-color: color-mix(in srgb, var(--text) 40%, transparent);
-  --face-bg: color-mix(in srgb, var(--surface) 55%, transparent);
-  --face-shadow: inset 0 1px 0 var(--bevel), 0 6px 16px -8px var(--drop);
-  --accent-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 6px 16px -6px var(--accent);
-  --danger-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 6px 16px -6px var(--danger);
-  --pressed-shadow: inset 0 2px 5px var(--drop);
-  --press-transform: scale(.98);
-  --panel-bg: color-mix(in srgb, var(--surface) 62%, transparent);
-  --panel-border-color: color-mix(in srgb, var(--text) 14%, transparent);
-  --panel-shadow: 0 10px 30px -14px var(--drop);
-  --panel-filter: blur(16px) saturate(1.4);
-  --sidebar-bg: color-mix(in srgb, var(--sidebar) 55%, transparent);
-  --app-bg:
-    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 45%),
-    radial-gradient(circle at 88% 92%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 50%),
-    var(--bg);
-}
-/* "Dalga": cam yüzeyler, arkada app.js içindeki WaveBackground tuvali */
-html[data-design="wave"], html[data-design="orbit"], html[data-design="arrow"] { --app-bg: var(--bg); }
-.wave-bg { position: fixed; top: 0; left: -20px; width: calc(100% + 40px); height: 100%; z-index: -1; filter: blur(10px); pointer-events: none; }
-/* "Hap": PillsMark işaretindeki biçim; içi boş, vurgu renginde çerçeveli hap düğmeler. Biçim SVG yerine
-   tam yuvarlak çerçeveyle çizilir, böylece her genişlikteki düğmede bozulmadan aynı kalır.
-   Ana düğmeler ve seçili öğeler vurgu tonlu dolguyla ayrılır. Cam paneller kullanır. */
-html[data-design="pill"] {
-  --pill: var(--accent);
-  --btn-radius: 999px;
-  --frame-w: 2px; --frame-color: var(--pill); --accent-frame: var(--pill);
-  --face-bg: transparent;
-  --accent-bg: color-mix(in srgb, var(--pill) 26%, transparent);
-  --face-shadow: none; --accent-shadow: none; --danger-shadow: none; --pressed-shadow: none;
-  --press-transform: scale(.97);
-  --app-bg: var(--bg);
-}
-html[data-design="pill"] .v-application .v-btn, html[data-design="pill"] .nav .v-list-item, html[data-design="pill"] .tab, html[data-design="pill"] .segmented button, html[data-design="pill"] .theme-card { --on-accent: var(--text); }
-html[data-design="pill"] .v-application .v-btn:not(.v-btn--icon):not(.primary):not(.btn-danger):not(.v-btn--disabled):hover,
-html[data-design="pill"] .v-application .round-button.v-btn:hover,
-html[data-design="pill"] .nav .v-list-item:not(.v-list-item--active):hover,
-html[data-design="pill"] .tab:not([aria-selected="true"]):hover,
-html[data-design="pill"] .segmented button:not([aria-pressed="true"]):hover,
-html[data-design="pill"] .theme-card:not([aria-pressed="true"]):hover { background: color-mix(in srgb, var(--pill) 12%, transparent) !important; }
-html[data-design="pill"] .sidebar, html[data-design="ring"] .sidebar { backdrop-filter: var(--panel-filter); }
-
-/* "Aurora hap": hap çerçevesinin içinden kutup ışığı akar (Aurora'nın hap işaretiyle maskelendiği
-   PillsMark bileşeninin CSS karşılığı). Her düğmede ayrı WebGL çizilemeyeceği için ışık, çerçeve
-   kutusunda kayan, tema vurgu renginde bir geçiştir; düğmenin içi yüzey rengiyle kapatılır. */
+/* Işıklı hap çerçeve: düğme çerçevesi saydamdır; ışık, çerçeve kutusunda kayan tema vurgu
+   renginde bir geçiştir, düğmenin içi yüzey rengiyle kapatılır. Yüzey kuralları !important olduğu
+   için hareket kayıtlı --ring-x özelliği üzerinden yürür; onu kullanan belirteçler bu yüzden kök
+   yerine doğrudan öğelerde tanımlanır. */
 @property --ring-x { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
-html[data-design="ring"] {
-  --btn-radius: 999px;
-  --frame-w: 2px; --frame-color: transparent; --accent-frame: transparent;
-  --ring-tint: color-mix(in srgb, var(--accent) 26%, var(--surface));
-  --face-shadow: none; --accent-shadow: none; --danger-shadow: none; --pressed-shadow: none;
-  --press-transform: scale(.97);
-  --app-bg: var(--bg);
-}
-html[data-design="ring"] .v-application .v-btn, html[data-design="ring"] .nav .v-list-item, html[data-design="ring"] .tab, html[data-design="ring"] .segmented button, html[data-design="ring"] .theme-card { --on-accent: var(--text); }
-html[data-design="ring"] .v-application .v-btn:not(.v-btn--icon),
-html[data-design="ring"] .v-application .round-button.v-btn,
-html[data-design="ring"] .nav .v-list-item,
-html[data-design="ring"] .tab,
-html[data-design="ring"] .segmented button,
-html[data-design="ring"] .theme-card {
+:root .v-application .v-btn, :root .nav .v-list-item, :root .tab, :root .segmented button, :root .theme-card { --on-accent: var(--text); }
+:root .v-application .v-btn:not(.v-btn--icon),
+:root .v-application .round-button.v-btn,
+:root .nav .v-list-item,
+:root .tab,
+:root .segmented button,
+:root .theme-card {
   --ring-layer: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 45%, var(--bg)), color-mix(in srgb, var(--accent) 10%, var(--bg)), color-mix(in srgb, var(--accent) 80%, #fff), var(--accent)) var(--ring-x) 0 / 300% 100% border-box;
   --face-bg: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ring-layer);
   --accent-bg: linear-gradient(var(--ring-tint), var(--ring-tint)) padding-box, var(--ring-layer);
   animation: ring-flow 4s linear infinite;
 }
-html[data-design="ring"] .v-application .v-btn.v-btn--disabled { animation: none; }
+:root .v-application .v-btn.v-btn--disabled { animation: none; }
 @keyframes ring-flow { to { --ring-x: 150%; } }
 @media (prefers-reduced-motion: reduce) {
-  html[data-design="ring"] .v-application .v-btn, html[data-design="ring"] .nav .v-list-item, html[data-design="ring"] .tab,
-  html[data-design="ring"] .segmented button, html[data-design="ring"] .theme-card { animation: none !important; }
+  :root .v-application .v-btn, :root .nav .v-list-item, :root .tab,
+  :root .segmented button, :root .theme-card { animation: none !important; }
 }
-.aurora-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: .6; pointer-events: none; }
-/* Açık temalarda arka planlar soluk kalmasın diye daha doygun gösterilir. */
-html:not(.dark-theme) .aurora-bg { opacity: .9; }
-html:not(.dark-theme) .wave-bg { filter: blur(10px) saturate(1.6); }
+.sidebar { backdrop-filter: var(--panel-filter); }
+
+/* Arka plan tuvali (app.js içindeki SplashBackground) */
 .splash-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; filter: blur(8px); pointer-events: none; }
-html[data-design="glass"] .sidebar, html[data-design="wave"] .sidebar, html[data-design="orbit"] .sidebar, html[data-design="arrow"] .sidebar { backdrop-filter: var(--panel-filter); }
-
-/* "Oklu": Dalga arka planı + üzerine gelince renkleri yer değiştiren düğmeler (Get Started Button
-   etkisinin CSS karşılığı). Ana düğmelerde ayrıca içinde ok kayan bir daire bulunur: ok simgesi
-   ::after içinde durur, gölgesi ikinci oktur ve text-indent kaydırılınca biri çıkar diğeri girer. */
-html[data-design="arrow"] {
-  --btn-radius: 8px;
-  --frame-color: transparent; --accent-frame: transparent; --danger-frame: transparent;
-  --face-bg: var(--accent-soft); --accent-bg: var(--accent);
-  --face-shadow: none; --accent-shadow: none; --danger-shadow: none; --pressed-shadow: none;
-  --press-transform: scale(.97);
-}
-html[data-design="arrow"] .v-application .v-btn:not(.v-btn--icon):not(.btn-danger):not(.v-btn--disabled) {
-  background: var(--accent-soft) !important;
-  color: var(--accent-text) !important;
-  font-weight: 700;
-  transition: background-color .1s ease-in-out, color .1s ease-in-out, transform .08s ease-out;
-}
-html[data-design="arrow"] .v-application .v-btn:not(.v-btn--icon):not(.btn-danger):not(.v-btn--disabled):hover {
-  background: var(--accent) !important;
-  color: var(--on-accent) !important;
-  filter: none;
-}
-html[data-design="arrow"] .v-application .v-btn:not(.v-btn--icon):not(.btn-danger) .v-icon { color: inherit !important; }
-html[data-design="arrow"] .v-application .v-btn.primary:not(.v-btn--icon):not(.v-btn--disabled)::after {
-  content: "arrow_forward";
-  flex: 0 0 28px; width: 28px; height: 28px; margin: 0 -6px 0 10px;
-  border-radius: 50%; overflow: hidden;
-  font: normal 16px/28px "Material Icons"; font-feature-settings: "liga";
-  letter-spacing: normal; text-transform: none; white-space: nowrap; text-align: left;
-  text-indent: 6px;
-  background: var(--accent);
-  color: var(--accent-soft);
-  text-shadow: -28px 0 0 var(--accent);
-  transition: text-indent .2s ease-in-out, background-color .1s ease-in-out;
-}
-html[data-design="arrow"] .v-application .v-btn.primary:not(.v-btn--icon):not(.v-btn--disabled):hover::after { text-indent: 34px; background: var(--accent-soft); }
-html[data-design="arrow"] .v-application .v-btn.primary.v-size--small:not(.v-btn--icon):not(.v-btn--disabled)::after {
-  flex-basis: 20px; width: 20px; height: 20px; margin: 0 -6px 0 8px;
-  font-size: 14px; line-height: 20px; text-indent: 3px; text-shadow: -20px 0 0 var(--accent);
-}
-html[data-design="arrow"] .v-application .v-btn.primary.v-size--small:not(.v-btn--icon):not(.v-btn--disabled):hover::after { text-indent: 23px; }
-html[data-design="arrow"] .v-application .v-btn.v-btn--loading::after { visibility: hidden; }
-
-/* "Gezen ışık": Dalga arka planı + düğme çerçevesinde dolaşan ışık (Aceternity Moving Border
-   etkisinin CSS karşılığı). Çerçeve saydamdır; ışık, çerçeve kutusuna çizilen dönen konik geçiştir.
-   Yüzey belirteçleri açıyı kullandığı için kök yerine doğrudan öğelerde tanımlanır. */
-@property --orbit-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-html[data-design="orbit"] { --btn-radius: 28px; --frame-w: 2px; --frame-color: transparent; --accent-frame: transparent; --danger-frame: transparent; }
-html[data-design="orbit"] .v-application .v-btn:not(.v-btn--icon),
-html[data-design="orbit"] .v-application .round-button.v-btn,
-html[data-design="orbit"] .nav .v-list-item,
-html[data-design="orbit"] .tab,
-html[data-design="orbit"] .segmented button,
-html[data-design="orbit"] .theme-card {
-  --face-bg: linear-gradient(var(--surface), var(--surface)) padding-box, conic-gradient(from var(--orbit-angle), var(--frame) 0 62%, var(--accent) 86%, var(--frame) 100%) border-box;
-  --accent-bg: linear-gradient(180deg, var(--accent-top), var(--accent-bottom)) padding-box, conic-gradient(from var(--orbit-angle), var(--accent-edge) 0 62%, #fff 86%, var(--accent-edge) 100%) border-box;
-  --danger-bg: linear-gradient(180deg, var(--danger-top), var(--danger-bottom)) padding-box, conic-gradient(from var(--orbit-angle), var(--danger-edge) 0 62%, #fff 86%, var(--danger-edge) 100%) border-box;
-  animation: orbit 3s linear infinite;
-}
-html[data-design="orbit"] .v-application .v-btn.v-btn--disabled { animation: none; }
-@keyframes orbit { to { --orbit-angle: 360deg; } }
-@media (prefers-reduced-motion: reduce) {
-  html[data-design="orbit"] .v-application .v-btn, html[data-design="orbit"] .nav .v-list-item, html[data-design="orbit"] .tab,
-  html[data-design="orbit"] .segmented button, html[data-design="orbit"] .theme-card { animation: none !important; }
-}
-html[data-design="brutal"] {
-  --btn-radius: 0px; --panel-radius: 0px; --field-radius: 0px;
-  --frame-w: 2px; --frame-color: var(--text); --accent-frame: var(--text); --danger-frame: var(--text);
-  --face-bg: var(--surface); --accent-bg: var(--accent); --danger-bg: var(--danger);
-  --face-shadow: 4px 4px 0 var(--text); --accent-shadow: 4px 4px 0 var(--text); --danger-shadow: 4px 4px 0 var(--text);
-  --pressed-shadow: 0 0 0 var(--text);
-  --press-transform: translate(4px, 4px);
-  --panel-border-w: 2px; --panel-border-color: var(--text);
-  --panel-shadow: 6px 6px 0 var(--text);
-}
 
 /* Dar pencere */
 @media (max-width: 920px) {

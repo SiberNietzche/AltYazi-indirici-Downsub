@@ -4,3 +4,9 @@ dist/
 __pycache__/
 *.pyc
 *.spec
+
+# Tauri kabuğu
+src-tauri/target/
+src-tauri/gen/
+src-tauri/binaries/
+node_modules/

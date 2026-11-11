@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from altyazi.engine import EngineError  # noqa: E402
-from altyazi.server import DESIGNS, LOOK_OPTIONS, LOCALES, THEMES, Settings  # noqa: E402
+from altyazi.server import LOCALES, THEMES, Settings  # noqa: E402
 
 WEB = ROOT / "src" / "altyazi" / "web"
 
@@ -65,54 +65,7 @@ class SettingsTests(unittest.TestCase):
         self.assertIsInstance(settings.data["download_dir"], str)
 
 
-    def test_design_default_round_trip_and_validation(self):
-        settings = Settings()
-        self.assertEqual(settings.data["design"], "rainbow")
-        settings.update({"design": "glass"})
-        self.assertEqual(Settings().data["design"], "glass")
-        with self.assertRaises(EngineError):
-            settings.update({"design": "yok"})
-        self.write({"design": "yok"})
-        self.assertEqual(Settings().data["design"], "rainbow")
-
-
-    def test_font_options_default_round_trip_and_validation(self):
-        settings = Settings()
-        self.assertEqual({key: settings.data[key] for key in LOOK_OPTIONS}, {key: default for key, (_, default) in LOOK_OPTIONS.items()})
-        settings.update({"font": "georgia", "font_size": "large", "font_weight": "bold"})
-        saved = Settings().data
-        self.assertEqual((saved["font"], saved["font_size"], saved["font_weight"]), ("georgia", "large", "bold"))
-        for bad in ({"font": "yok"}, {"font_size": 3}, {"font_weight": ["bold"]}):
-            with self.assertRaises(EngineError):
-                settings.update(bad)
-        self.write({"font": "yok", "font_size": ["x"], "font_weight": 1})
-        self.assertEqual(Settings().data["font_size"], "normal")
-
-
 class WebDataTests(unittest.TestCase):
-    def test_font_ids_match_server(self):
-        source = (WEB / "themes.js").read_text("utf-8")
-        self.assertEqual(set(re.findall(r"\{ id: '(\w+)', label", source)), LOOK_OPTIONS["font"][0])
-        backgrounds = re.search(r"const backgrounds = \[(.*?)\]", source).group(1)
-        self.assertEqual(set(re.findall(r"'(\w+)'", backgrounds)), LOOK_OPTIONS["background"][0])
-        sizes = re.search(r"const fontSizes = \{(.*?)\}", source).group(1)
-        self.assertEqual(set(re.findall(r"(\w+):", sizes)), LOOK_OPTIONS["font_size"][0])
-
-    def test_design_ids_match_server(self):
-        source = (WEB / "themes.js").read_text("utf-8")
-        listed = re.search(r"const designs = \[(.*?)\]", source).group(1)
-        self.assertEqual(set(re.findall(r"'(\w+)'", listed)), DESIGNS)
-        styles = (WEB / "style.css").read_text("utf-8")
-        self.assertLessEqual(set(re.findall(r'html\[data-design="(\w+)"\]', styles)), DESIGNS)
-
-    def test_every_locale_names_every_design(self):
-        source = (WEB / "i18n.js").read_text("utf-8")
-        for key in ("designs", "designInfo"):
-            blocks = re.findall(key + r": \{(.*?)\}", source, re.S)
-            self.assertEqual(len(blocks), len(LOCALES))
-            for block in blocks:
-                self.assertEqual(set(re.findall(r"(\w+): '", block)), DESIGNS)
-
     def test_theme_ids_match_server(self):
         source = (WEB / "themes.js").read_text("utf-8")
         self.assertEqual(set(re.findall(r"(?:light|dark)\('(\w+)'", source)), THEMES)

@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Arayüz yerel Python sunucusundan yüklendiği için kabuk komutlarına yalnızca 127.0.0.1 erişebilir.",
+  "windows": ["main"],
+  "remote": {
+    "urls": ["http://127.0.0.1:*/*"]
+  },
+  "permissions": ["core:default", "allow-choose-folder"]
+}

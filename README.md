@@ -17,7 +17,8 @@ ve istediğiniz dilin yanındaki biçim tuşuna tıklayın. Dosyalar varsayılan
 - İki dili tek dosyada birleştiren çift dilli altyazı
 - Oynatma listesi ve kanal indirme (en fazla 500 video)
 - Türkçe, Kürtçe (Kurmancî) ve İngilizce arayüz
-- Beş açık ve dört koyu renk teması, çerçeveli ve kabartmalı düğmeler
+- Beş açık ve dört koyu renk teması, çerçevesinden ışık akan hap düğmeler,
+  imleci izleyen renkli arka plan
 - Aranabilir dil listesi; dil adları Türkçe ve İngilizce arayüzde o dilde görünür,
   Kürtçe arayüzde kaynağın verdiği İngilizce adlarla gösterilir
 - Oturumda kaydedilen dosyaları gösteren İndirilenler ekranı
@@ -49,6 +50,20 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 
 Betik testleri çalıştırır ve `dist\AltyaziIndirici.exe` dosyasını üretir.
 
+### Tauri sürümü
+
+Aynı arayüz ve aynı Python motoru, Tauri kabuğuyla da derlenebilir. Ek olarak Rust (MSVC
+araç zinciri) ve Node.js gerekir.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build-tauri.ps1
+```
+
+Betik testleri çalıştırır, Python motorunu `altyazi-server` adlı yan süreç olarak paketler ve
+`src-tauri\target\release\altyazi-indirici.exe` ile `bundle\nsis` altındaki kurulum dosyasını
+üretir. Kabuk açılışta motoru başlatır, arayüzü ondan yükler ve kapanırken motoru da kapatır.
+Kurulum dosyası istenmiyorsa `-NoBundle` eklenir.
+
 ## Yapı
 
 | Yol | Görev |
@@ -58,6 +73,8 @@ Betik testleri çalıştırır ve `dist\AltyaziIndirici.exe` dosyasını üretir
 | `src/altyazi/library.py` | İndirilenler listesi, gizleme ve Geri Dönüşüm Kutusu'na taşıma |
 | `src/altyazi/server.py` | Yalnızca 127.0.0.1'e açık, anahtarlı yerel API |
 | `src/altyazi/main.py` | Masaüstü penceresi (pywebview ve WebView2) |
+| `src-tauri/` | Tauri kabuğu: motoru yan süreç olarak başlatır, pencereyi ve klasör seçiciyi sağlar |
+| `tools/make_icon.py` | Program simgesini ve arayüzdeki amblem maskesini (`laurel.svg`) üretir |
 | `src/altyazi/web/` | Arayüz (Vue 2, Vuetify 2, Vuex, vue-router, vue-i18n, axios) |
 | `src/altyazi/web/themes.js` | Renk temaları; yeni tema `server.py` içindeki `THEMES` kümesine de eklenir |
 | `src/altyazi/web/i18n.js` | Arayüz metinleri (tr, ku, en) |
