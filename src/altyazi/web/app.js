@@ -135,20 +135,24 @@
 
   // Dil adlarını arayüz diliyle gösterir; bilinmeyen kodlarda kaynağın verdiği ada döner.
   const displayNames = {};
+  const nameIn = (locale, code) => {
+    try {
+      // Tarayıcı motorunda bu dilin verisi yoksa (ör. Kürtçe) ad üretilmez.
+      if (!Intl.DisplayNames.supportedLocalesOf([locale]).length) return null;
+      displayNames[locale] = displayNames[locale] || new Intl.DisplayNames([locale], { type: 'language' });
+      const name = displayNames[locale].of(code);
+      return name && name !== code ? name : null;
+    } catch (err) {
+      return null; // Geçersiz dil kodu
+    }
+  };
   const languageLabel = (track, locale, originalText) => {
     const isOriginal = track.lang.endsWith('-orig');
     const code = track.lang.replace(/-orig$/, '');
-    let label = track.name;
-    try {
-      // Tarayıcı motorunda bu dilin verisi yoksa kaynağın verdiği ada dönülür.
-      if (Intl.DisplayNames.supportedLocalesOf([locale]).length) {
-        displayNames[locale] = displayNames[locale] || new Intl.DisplayNames([locale], { type: 'language' });
-        const localized = displayNames[locale].of(code);
-        if (localized && localized !== code) label = localized;
-      }
-    } catch (err) {
-      label = track.name; // Geçersiz dil kodu
-    }
+    // Kaynak çeviri izlerine ad vermez (ad = kod). Arayüz dilinin adları da yoksa İngilizce ad kullanılır;
+    // Kürtçe arayüz böylece her yerde kaynağın kullandığı İngilizce adları gösterir.
+    const sourceName = track.name && track.name !== track.lang && track.name !== code ? track.name : null;
+    const label = nameIn(locale, code) || sourceName || nameIn('en', code) || track.name;
     return isOriginal ? `${label} (${originalText})` : label;
   };
 
