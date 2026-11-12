@@ -13,7 +13,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from . import __version__
-from . import system
+from . import system, updater
 from .engine import Engine, EngineError, JobManager
 from .library import Library
 
@@ -38,6 +38,7 @@ class Settings:
         self._lock = threading.Lock()
         self.data = {
             "download_dir": str(system.default_download_dir()), "theme": "ocean", "locale": "tr",
+            "auto_update": True,
         }
         try:
             saved = json.loads(self._path.read_text("utf-8"))
@@ -53,6 +54,8 @@ class Settings:
             self.data["theme"] = saved["theme"]
         elif saved.get("dark"):  # Eski sürümün koyu tema tercihi korunur
             self.data["theme"] = "graphite"
+        if isinstance(saved.get("auto_update"), bool):
+            self.data["auto_update"] = saved["auto_update"]
 
     def update(self, values: dict) -> dict:
         with self._lock:
@@ -69,6 +72,10 @@ class Settings:
                 if values["locale"] not in LOCALES:
                     raise EngineError("unknown_locale")
                 self.data["locale"] = values["locale"]
+            if "auto_update" in values:
+                if not isinstance(values["auto_update"], bool):
+                    raise EngineError("invalid_request")
+                self.data["auto_update"] = values["auto_update"]
             self._path.parent.mkdir(parents=True, exist_ok=True)
             self._path.write_text(json.dumps(self.data, ensure_ascii=False, indent=2), "utf-8")
             return dict(self.data)
@@ -174,6 +181,12 @@ class Handler(BaseHTTPRequestHandler):
     def _settings_set(self, body: dict) -> dict:
         return self.context.settings.update(body)
 
+    def _update_status(self, _body: dict) -> dict:
+        return updater.status(self.context.settings.data["auto_update"])
+
+    def _update_check(self, _body: dict) -> dict:
+        return updater.check(self.context.settings.data["auto_update"], force=True)
+
     def _info(self, body: dict) -> dict:
         return self.context.engine.open(str(body.get("url", "")))
 
@@ -243,6 +256,8 @@ class Handler(BaseHTTPRequestHandler):
     _ROUTES = {
         ("GET", "/api/settings"): _settings_get,
         ("POST", "/api/settings"): _settings_set,
+        ("GET", "/api/update"): _update_status,
+        ("POST", "/api/update/check"): _update_check,
         ("POST", "/api/info"): _info,
         ("POST", "/api/refresh"): _refresh,
         ("POST", "/api/download"): _download,

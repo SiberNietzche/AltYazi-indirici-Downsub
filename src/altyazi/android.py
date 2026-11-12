@@ -23,6 +23,10 @@ def start(data_dir: str, download_dir: str) -> str:
             os.environ["ALTYAZI_PLATFORM"] = "android"
             os.environ["ALTYAZI_DATA_DIR"] = data_dir
             os.environ["ALTYAZI_DOWNLOAD_DIR"] = download_dir
+            from . import updater
+
+            # İndirilmiş daha yeni bir yt-dlp, motor yüklenmeden önce devreye alınır.
+            updater.activate()
             from .server import AppContext, create_server
 
             context = AppContext()
@@ -30,5 +34,6 @@ def start(data_dir: str, download_dir: str) -> str:
             context.settings.update({"download_dir": download_dir})
             server = create_server(context, 0)
             threading.Thread(target=server.serve_forever, name="altyazi-server", daemon=True).start()
+            updater.check_later(lambda: context.settings.data["auto_update"])
             _url = f"http://127.0.0.1:{server.server_address[1]}/?token={context.token}"
         return _url

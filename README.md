@@ -49,12 +49,32 @@ program içindeki **Kılavuz** sayfasındadır.
   yine olmazsa satırda "Yenile ve yeniden dene" düğmesi
 - Tüm hata mesajları seçili arayüz dilinde
 - Var olan dosyaların üzerine yazmama
+- Altyazı motoru (yt-dlp) internete bağlıyken kendiliğinden güncellenir
+
+## Altyazı motorunun güncellenmesi
+
+Kaynak siteler sık değiştiği için program, altyazıları alan yt-dlp'yi kendisi günceller:
+
+- Açılıştan birkaç saniye sonra, günde en fazla bir kez PyPI'de daha yeni bir yt-dlp
+  olup olmadığına bakılır. **Ayarlar > Şimdi denetle** ile hemen de denetlenebilir.
+- Yeni sürüm (ve YouTube için gerektirdiği yt-dlp-ejs sürümü) indirilir, PyPI'nin verdiği
+  SHA-256 özetiyle doğrulanır ve ayar klasöründeki `yt-dlp` klasörüne açılır. Program yeniden
+  açılınca kullanılır.
+- İndirilen sürüm açılışta yüklenemezse program kendiliğinden gömülü sürüme döner ve o sürümü bir
+  daha indirmez. Programın yeni bir sürümü daha yeni bir yt-dlp ile gelirse indirilen eski sürüm
+  silinir.
+- Programın kendisi güncellenmez; yeni sürümleri GitHub'daki Releases sayfasından alın.
 
 ## Gizlilik
 
 - Program kullanım verisi toplamaz, hesap istemez ve hiçbir yere bilgi göndermez.
-- İnternete yalnızca yapıştırdığınız bağlantının kaynak sitesine bağlanır: video bilgisi,
-  küçük resim ve altyazı oradan alınır. Kaynak site bu istekleri kendi kurallarına göre görür.
+- İnternete yalnızca iki yere bağlanır:
+  - yapıştırdığınız bağlantının kaynak sitesi: video bilgisi, küçük resim ve altyazı oradan
+    alınır. Kaynak site bu istekleri kendi kurallarına göre görür;
+  - altyazı motorunun güncellemesi açıksa (varsayılan) günde en fazla bir kez PyPI
+    (`pypi.org`, `files.pythonhosted.org`): yalnızca yt-dlp'nin son sürüm bilgisi istenir ve
+    yeni sürüm varsa paket indirilir. İstekte program adı ve sürümünden başka bilgi yoktur.
+    **Ayarlar**'dan kapatılabilir.
 - Arayüz ile motor aynı bilgisayarda, yalnızca `127.0.0.1` üzerinden ve her açılışta yeniden
   üretilen bir anahtarla konuşur; ağdaki başka cihazlar erişemez.
 - Ayarlar ve indirilenler listesi yalnızca kendi cihazınızda tutulur: Windows'ta
@@ -68,8 +88,9 @@ program içindeki **Kılavuz** sayfasındadır.
 - DRM ile korunan, ücretli veya oturum gerektiren içerikler indirilemez.
 - Kaynak siteler istekleri sınırlayabilir. YouTube otomatik çevirilerde zaman zaman
   HTTP 429 döndürür; birkaç dakika sonra yeniden denemek veya başka dil seçmek gerekir.
-- Siteler değiştikçe yt-dlp'nin güncellenmesi gerekir: `requirements.txt` içindeki
-  sürümü yükseltip programı yeniden derleyin.
+- Siteler değiştikçe yt-dlp'nin güncellenmesi gerekir. Program bunu kendisi yapar (aşağıya
+  bakın); kapatıldıysa ya da internet yoksa pakete gömülü sürüm kullanılır. Gömülü sürümü
+  yükseltmek için `requirements.txt` içindeki sürümü değiştirip programı yeniden derleyin.
 - İndirdiğiniz altyazıların kullanımından ve kaynak sitenin kurallarına uymaktan
   kullanıcı sorumludur.
 
@@ -148,6 +169,7 @@ aynı arayüz bir web görünümünde gösterilir.
 | --- | --- |
 | `src/altyazi/subtitles.py` | Altyazı ayrıştırma ve dönüştürme |
 | `src/altyazi/engine.py` | yt-dlp bağlantısı, indirme ve liste işleri |
+| `src/altyazi/updater.py` | yt-dlp'nin PyPI'den kendiliğinden güncellenmesi |
 | `src/altyazi/library.py` | İndirilenler listesi, gizleme ve çöp kutusuna taşıma |
 | `src/altyazi/system.py` | İşletim sistemine bağlı işler: klasör yerleri, çöp kutusu, dosya yöneticisi |
 | `src/altyazi/server.py` | Yalnızca 127.0.0.1'e açık, anahtarlı yerel API |

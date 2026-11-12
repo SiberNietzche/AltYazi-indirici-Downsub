@@ -45,7 +45,7 @@
 
   const store = new Vuex.Store({
     state: {
-      settings: { download_dir: '', theme: 'ocean', locale: 'tr', version: '' },
+      settings: { download_dir: '', theme: 'ocean', locale: 'tr', version: '', auto_update: true },
       video: null, url: '', toast: null, files: [], hiddenFiles: 0,
     },
     mutations: {
@@ -668,9 +668,24 @@
 
   const Settings = {
     components: { Segmented },
-    data() { return { folder: this.$store.state.settings.download_dir }; },
+    data() { return { folder: this.$store.state.settings.download_dir, update: null, checking: false }; },
     computed: {
       settings() { return this.$store.state.settings; },
+      autoUpdate: {
+        get() { return this.settings.auto_update === false ? 'off' : 'on'; },
+        set(value) { this.$store.dispatch('saveSettings', { auto_update: value === 'on' }).then(this.loadUpdate).catch(notifyError); },
+      },
+      onOff() { return [{ value: 'on', text: this.$t('settings.on') }, { value: 'off', text: this.$t('settings.off') }]; },
+      // Motorun durumu: indirilen yeni sürüm program yeniden açılınca kullanılır.
+      updateText() {
+        const u = this.update;
+        if (!u) return '';
+        if (this.checking || u.state === 'checking') return this.$t('settings.updateChecking');
+        if (u.pending) return this.$t('settings.updatePending', { version: u.pending });
+        if (u.state === 'error') return this.$t('settings.updateError');
+        if (u.state === 'uptodate') return this.$t('settings.updateLatest');
+        return '';
+      },
       locale: {
         get() { return this.settings.locale; },
         set(value) { this.$store.dispatch('saveSettings', { locale: value }).catch(notifyError); },
@@ -680,7 +695,25 @@
       locales() { return [{ value: 'tr', text: 'Türkçe' }, { value: 'ku', text: 'Kurdî' }, { value: 'en', text: 'English' }]; },
     },
     watch: { 'settings.download_dir'(value) { this.folder = value; } },
+    created() { this.loadUpdate(); },
     methods: {
+      async loadUpdate() {
+        try {
+          this.update = (await api.get('/update')).data;
+        } catch (err) {
+          this.update = null;
+        }
+      },
+      async checkNow() {
+        this.checking = true;
+        try {
+          this.update = (await api.post('/update/check', {})).data;
+        } catch (err) {
+          notifyError(err);
+        } finally {
+          this.checking = false;
+        }
+      },
       async save() {
         try {
           await this.$store.dispatch('saveSettings', { download_dir: this.folder });
@@ -738,7 +771,16 @@
             <segmented v-model="locale" :options="locales" :label="$t('settings.language')"></segmented>
           </div>
           <div class="setting">
-            <div class="setting-text"><div class="setting-name">{{ $t('settings.about') }}</div><div class="small muted">{{ $t('settings.version', { version: settings.version }) }}</div></div>
+            <div class="setting-text"><div class="setting-name">{{ $t('settings.autoUpdate') }}</div><div class="small muted">{{ $t('settings.autoUpdateHint') }}</div></div>
+            <segmented v-model="autoUpdate" :options="onOff" :label="$t('settings.autoUpdate')"></segmented>
+          </div>
+          <div class="setting">
+            <div class="setting-text">
+              <div class="setting-name">{{ $t('settings.about') }}</div>
+              <div class="small muted">{{ $t('settings.version', { version: settings.version, engine: update ? update.version : '' }) }}</div>
+              <div v-if="updateText" class="small muted" role="status" data-update-status>{{ updateText }}</div>
+            </div>
+            <v-btn outlined class="btn-quiet" :loading="checking" @click="checkNow">{{ $t('settings.checkNow') }}</v-btn>
           </div>
         </section>
       </div>`,

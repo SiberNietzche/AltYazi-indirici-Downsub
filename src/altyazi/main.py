@@ -12,7 +12,7 @@ import sys
 import threading
 import webbrowser
 
-from .server import AppContext, create_server
+from . import updater
 
 
 def _guard_streams() -> None:
@@ -45,12 +45,17 @@ def main() -> int:
     parser.add_argument("--token", help="Sınama için sabit erişim anahtarı")
     args = parser.parse_args()
 
+    # İndirilmiş daha yeni bir yt-dlp, motor (server -> engine) yüklenmeden önce devreye alınır.
+    updater.activate()
+    from .server import AppContext, create_server
+
     context = AppContext(args.token)
     server = create_server(context, args.port)
     url = f"http://127.0.0.1:{server.server_address[1]}/?token={context.token}"
 
     if args.serve and args.exit_with_stdin and stdin is not None:
         threading.Thread(target=_exit_when_stdin_closes, daemon=True).start()
+    updater.check_later(lambda: context.settings.data["auto_update"])
     print(url, flush=True)
     if not args.serve:
         webbrowser.open(url)

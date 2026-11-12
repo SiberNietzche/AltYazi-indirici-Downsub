@@ -49,6 +49,16 @@ class SettingsTests(unittest.TestCase):
         settings = Settings()
         self.assertEqual((settings.data["theme"], settings.data["locale"]), ("forest", "ku"))
 
+    def test_auto_update_setting(self):
+        settings = Settings()
+        self.assertIs(settings.data["auto_update"], True)  # Varsayılan açık
+        settings.update({"auto_update": False})
+        self.assertIs(Settings().data["auto_update"], False)
+        with self.assertRaises(EngineError):
+            settings.update({"auto_update": "evet"})
+        self.write({"auto_update": "hayır"})
+        self.assertIs(Settings().data["auto_update"], True)
+
     def test_invalid_values_rejected(self):
         settings = Settings()
         with self.assertRaises(EngineError):
