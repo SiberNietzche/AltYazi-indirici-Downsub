@@ -28,7 +28,15 @@
   Vue.use(Vuetify);
 
   const i18n = new VueI18n({ locale: 'tr', fallbackLocale: 'en', messages: window.APP_MESSAGES });
-  const errorMessage = (info) => i18n.t(`errors.${info.code}`, info.params);
+  const errorMessage = (info) => {
+    let params = info.params || {};
+    // Kaynak, çeviri izlerine ad vermez; dil kodu arayüz dilindeki adıyla gösterilir.
+    if (info.code === 'translation_blocked' && params.lang) {
+      const track = { lang: params.lang, name: params.name || params.lang };
+      params = Object.assign({}, params, { name: languageLabel(track, i18n.locale, i18n.t('tracks.original')) });
+    }
+    return i18n.t(`errors.${info.code}`, params);
+  };
   const vuetify = new Vuetify({ icons: { iconfont: 'md' } });
 
   function applyTheme(id) {
@@ -87,14 +95,31 @@
     notify(vm.$t('saved', { name: data.name }), 'success', data.path);
   }
 
-  /* İndirme hatasını kullanıcının dilinde gösterir ve yenileyip yeniden denemeyi sunar. */
+  /* İndirme hatasını kullanıcının dilinde gösterir ve yenileyip yeniden denemeyi sunar. YouTube bir
+     makine çevirisini vermediğinde, çevirinin yapıldığı özgün dili indirmeyi de önerir (canSource).
+     Her denemede hata yeniden değerlendirilir: çeviri gelirse bildirim kaybolur. */
   const RetryNotice = {
-    props: { info: Object, busy: Boolean },
-    computed: { text() { return errorMessage(this.info); } },
+    props: { info: Object, busy: Boolean, canSource: Boolean },
+    computed: {
+      text() { return errorMessage(this.info); },
+      source() {
+        const params = this.info && this.info.params;
+        return this.canSource && this.info.code === 'translation_blocked' && params && params.source ? params : null;
+      },
+      sourceLabel() {
+        const s = this.source;
+        // Düğme zaten "özgün" dediği için dil adına "(özgün)" eklenmez.
+        return s ? languageLabel({ lang: s.source_lang.replace(/-orig$/, ''), name: s.source_name || s.source_lang }, this.$i18n.locale, '') : '';
+      },
+    },
     template: `
-      <div class="retry-notice" role="alert">
+      <div class="retry-notice" role="alert" :data-error="info.code">
         <v-icon aria-hidden="true">error_outline</v-icon>
         <div class="fill break">{{ text }}</div>
+        <v-btn v-if="source" small class="retry-button" :disabled="busy" data-source-download
+               @click="$emit('source', source.source)">
+          <v-icon left small aria-hidden="true">file_download</v-icon>{{ $t('home.downloadSource', { lang: sourceLabel }) }}
+        </v-btn>
         <v-btn small class="retry-button" :loading="busy" @click="$emit('retry')">
           <v-icon left small aria-hidden="true">refresh</v-icon>{{ $t('home.refreshRetry') }}
         </v-btn>
@@ -152,6 +177,18 @@
           this.busy = null;
         }
       },
+      // Çevirinin yerine özgün dil indirilir; başarılı olursa çevirinin bildirimi kapanır.
+      async downloadSource(track, key) {
+        this.busy = track.key;
+        try {
+          await requestDownload(this, { id: this.videoId, track: key, format: this.format });
+          this.$delete(this.failures, track.key);
+        } catch (err) {
+          this.$set(this.failures, track.key, errorInfo(err));
+        } finally {
+          this.busy = null;
+        }
+      },
       async refreshAndRetry(track) {
         this.retrying = true;
         try {
@@ -176,7 +213,8 @@
               <v-icon left small aria-hidden="true">file_download</v-icon>{{ $t('home.download') }}
             </v-btn>
           </div>
-          <retry-notice v-if="failures[track.key]" :info="failures[track.key]" :busy="retrying || busy === track.key" @retry="refreshAndRetry(track)"></retry-notice>
+          <retry-notice v-if="failures[track.key]" :info="failures[track.key]" :busy="retrying || busy === track.key" can-source
+                        @retry="refreshAndRetry(track)" @source="downloadSource(track, $event)"></retry-notice>
         </div>
       </div>`,
   };

@@ -10,7 +10,7 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import parse_qs, urljoin, urlsplit
 
 import yt_dlp
 from yt_dlp.networking import Request
@@ -224,11 +224,17 @@ class Engine:
 
     # Altyazı alma -------------------------------------------------------
     def _fetch_bytes(self, ydl: yt_dlp.YoutubeDL, url: str, headers: dict | None, delays=_FIRST_TRY_DELAYS) -> bytes:
+        # YouTube makine çevirisi isteklerini (tlang) ilk istekte bile 429 ile geri çevirebiliyor;
+        # özgün altyazı aynı anda sorunsuz gelir. Bu sık istekten olmadığı için beklemek de tazelemek
+        # de işe yaramaz: hemen durulur ve kullanıcıya özgün dil önerilir.
+        translation = "tlang" in parse_qs(urlsplit(url).query)
         for delay in delays:
             try:
                 with ydl.urlopen(Request(url, headers=headers or {})) as response:
                     return response.read()
             except Exception as exc:
+                if "429" in str(exc) and translation:
+                    raise EngineError("translation_blocked") from exc
                 if "429" in str(exc) and delay is not None:
                     time.sleep(delay)
                     continue
@@ -239,7 +245,30 @@ class Engine:
         track = session.tracks.get(key)
         if track is None:
             raise EngineError("track_missing")
-        fmt = _pick_format(track["formats"])
+        try:
+            return self._fetch_format(session, _pick_format(track["formats"]), delays)
+        except EngineError as exc:
+            if exc.code == "translation_blocked":
+                exc.params.update(lang=track["lang"], name=track["name"], **self._source_of(session, track))
+            raise
+
+    @staticmethod
+    def _source_of(session: Session, track: dict) -> dict:
+        """Çevirinin yapıldığı özgün altyazıyı bulur: arayüz onu indirmeyi önerir."""
+        query = parse_qs(urlsplit(_pick_format(track["formats"]).get("url") or "").query)
+        lang = (query.get("lang") or [""])[0]
+        if (query.get("kind") or [""])[0] == "asr":
+            candidates = [f"auto:{lang}-orig", f"auto:{lang}"]
+        else:
+            candidates = [f"manual:{lang}"]
+        candidates += [key for key in session.tracks if key.startswith("auto:") and key.endswith("-orig")]
+        for key in candidates:
+            if key in session.tracks and key != track["key"]:
+                source = session.tracks[key]
+                return {"source": key, "source_lang": source["lang"], "source_name": source["name"]}
+        return {}
+
+    def _fetch_format(self, session: Session, fmt: dict, delays) -> tuple[bytes, str]:
         ext = (fmt.get("ext") or "vtt").lower()
         if fmt.get("data") is not None:
             data = fmt["data"]

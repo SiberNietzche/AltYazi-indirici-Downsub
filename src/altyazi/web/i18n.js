@@ -4,7 +4,7 @@ window.APP_MESSAGES = {
     home: {
       title: 'Altyazı indir', sub: 'Bir video veya oynatma listesi bağlantısı yapıştırın.',
       label: 'Video bağlantısı', placeholder: 'https://', paste: 'Panodan yapıştır', fetch: 'Getir', clear: 'Temizle', loading: 'Video bilgileri alınıyor…',
-      pasteFailed: 'Pano okunamadı. Ctrl+V ile yapıştırın.', retry: 'Yeniden dene', refreshRetry: 'Yenile ve yeniden dene', refreshList: 'Dil listesini yenile', refreshed: 'Dil listesi yenilendi',
+      pasteFailed: 'Pano okunamadı. Ctrl+V ile yapıştırın.', retry: 'Yeniden dene', refreshRetry: 'Yenile ve yeniden dene', downloadSource: 'Özgün dili indir: {lang}', refreshList: 'Dil listesini yenile', refreshed: 'Dil listesi yenilendi',
       step1: 'Bağlantıyı yapıştırın', step1d: 'Video, oynatma listesi veya kanal bağlantısı olabilir.',
       step2: 'Dil ve biçim seçin', step2d: 'Gerçek altyazılar, otomatik altyazılar ve çeviriler ayrı listelenir.',
       step3: 'İndirin', step3d: 'Dosya, Ayarlar\'da belirlediğiniz klasöre kaydedilir.',
@@ -76,6 +76,7 @@ window.APP_MESSAGES = {
       file_error: 'Dosya işlemi başarısız: {detail}',
       unexpected: 'Beklenmeyen hata: {detail}',
       not_listed: 'Bu dosya listede değil, işlem yapılmadı.',
+      translation_blocked: "YouTube {name} makine çevirisini şu an vermiyor (HTTP 429). Bu, sık istekten değil YouTube'un çeviriye koyduğu kısıtlamadan kaynaklanır; beklemek genellikle işe yaramaz. Daha sonra yeniden deneyebilir ya da özgün dili indirebilirsiniz.",
       network: 'Programın iç sunucusuna ulaşılamadı.',
     },
     themes: { ocean: 'Okyanus', emerald: 'Zümrüt', amethyst: 'Ametist', rose: 'Gül', amber: 'Kehribar', graphite: 'Grafit', midnight: 'Gece mavisi', forest: 'Orman', wine: 'Şarap' },
@@ -130,6 +131,7 @@ window.APP_MESSAGES = {
         ] },
         { title: "Sorun çıkarsa", items: [
           "HTTP 429 hatası: kaynak site istekleri geçici olarak sınırlamıştır. Birkaç dakika bekleyip yeniden deneyin ya da başka bir dil seçin.",
+          "YouTube makine çevirilerini (Çeviriler sekmesi) çoğu zaman vermez. Bu durumda program hemen uyarır; Özgün dili indir düğmesiyle çevirinin yapıldığı dili indirebilir ya da daha sonra Yenile ve yeniden dene ile yeniden deneyebilirsiniz.",
           "İndirme başarısız olursa program dil listesini yenileyip kendiliğinden bir kez daha dener. Yine olmazsa satırdaki Yenile ve yeniden dene düğmesine basın.",
           "DRM ile korunan, ücretli veya oturum açmayı gerektiren içeriklerin altyazısı indirilemez.",
           "Altyazı bulunamadı uyarısı çıkarsa videonun o dilde altyazısı yoktur; Otomatik ve Çeviriler sekmelerine bakın.",
@@ -144,7 +146,7 @@ window.APP_MESSAGES = {
     home: {
       title: 'Binnivîs daxe', sub: 'Girêdana vîdyoyekê an lîsteya lêdanê pêve bike.',
       label: 'Girêdana vîdyoyê', placeholder: 'https://', paste: 'Ji panoyê pêve bike', fetch: 'Bîne', clear: 'Paqij bike', loading: 'Agahiyên vîdyoyê têne girtin…',
-      pasteFailed: 'Pano nehat xwendin. Ctrl+V bi kar bîne.', retry: 'Dîsa biceribîne', refreshRetry: 'Nû bike û dîsa biceribîne', refreshList: 'Lîsteya zimanan nû bike', refreshed: 'Lîsteya zimanan hat nûkirin',
+      pasteFailed: 'Pano nehat xwendin. Ctrl+V bi kar bîne.', retry: 'Dîsa biceribîne', refreshRetry: 'Nû bike û dîsa biceribîne', downloadSource: 'Zimanê resen daxe: {lang}', refreshList: 'Lîsteya zimanan nû bike', refreshed: 'Lîsteya zimanan hat nûkirin',
       step1: 'Girêdanê pêve bike', step1d: 'Dikare girêdana vîdyo, lîsteya lêdanê an kanalê be.',
       step2: 'Ziman û formatê hilbijêre', step2d: 'Binnivîs, binnivîsên xweber û werger cuda têne nîşandan.',
       step3: 'Daxe', step3d: 'Pel di peldanka ku te di Mîhengan de hilbijartiye de tê tomarkirin.',
@@ -216,6 +218,7 @@ window.APP_MESSAGES = {
       file_error: 'Karê pelê bi ser neket: {detail}',
       unexpected: 'Çewtiya nediyar: {detail}',
       not_listed: 'Ev pel ne di lîsteyê de ye, tiştek nehat kirin.',
+      translation_blocked: 'YouTube niha wergera makîneyî ya {name} nade (HTTP 429). Ev ne ji ber daxwazên pir e, ji ber sînorê ku YouTube danîye ser wergerê ye; li bendê mayîn bi gelemperî kêr nayê. Paşê dîsa biceribîne an zimanê resen daxe.',
       network: 'Bi servera hundirîn a bernameyê re têkilî çênebû.',
     },
     themes: { ocean: 'Okyanûs', emerald: 'Zimrût', amethyst: 'Ametîst', rose: 'Gul', amber: 'Kehrîba', graphite: 'Grafît', midnight: 'Şîniya şevê', forest: 'Daristan', wine: 'Şerab' },
@@ -270,6 +273,7 @@ window.APP_MESSAGES = {
         ] },
         { title: "Heke pirsgirêk derkeve", items: [
           "Çewtiya HTTP 429: malpera çavkanî daxwazan bi awayekî demkî sînor kiriye. Çend deqeyan bisekine û dîsa biceribîne an zimanekî din hilbijêre.",
+          "YouTube gelek caran wergerên makîneyî (beşa Werger) nade. Wê demê bername yekser hişyar dike; bi bişkoka Zimanê resen daxe dikarî zimanê ku werger jê hatiye kirin daxî, an paşê bi Nû bike û dîsa biceribîne dîsa biceribînî.",
           "Heke daxistin bi ser nekeve, bername lîsteya zimanan nû dike û bi xwe carekê din diceribîne. Heke dîsa nebe, di rêzê de li bişkoka Nû bike û dîsa biceribîne bixe.",
           "Binnivîsên naverokên bi DRM parastî, bi pere an yên ku têketinê dixwazin nayên daxistin.",
           "Heke hişyariya ku binnivîs nehat dîtin derkeve, binnivîsa vîdyoyê bi wî zimanî tune; li beşên Xweber û Werger binêre.",
@@ -284,7 +288,7 @@ window.APP_MESSAGES = {
     home: {
       title: 'Get subtitles', sub: 'Paste a link to a video or playlist.',
       label: 'Video link', placeholder: 'https://', paste: 'Paste from clipboard', fetch: 'Fetch', clear: 'Clear', loading: 'Getting video details…',
-      pasteFailed: 'Could not read the clipboard. Use Ctrl+V.', retry: 'Try again', refreshRetry: 'Refresh and try again', refreshList: 'Refresh language list', refreshed: 'Language list refreshed',
+      pasteFailed: 'Could not read the clipboard. Use Ctrl+V.', retry: 'Try again', refreshRetry: 'Refresh and try again', downloadSource: 'Download the original: {lang}', refreshList: 'Refresh language list', refreshed: 'Language list refreshed',
       step1: 'Paste the link', step1d: 'It can be a video, playlist or channel link.',
       step2: 'Pick language and format', step2d: 'Subtitles, automatic captions and translations are listed separately.',
       step3: 'Download', step3d: 'The file is saved to the folder chosen in Settings.',
@@ -356,6 +360,7 @@ window.APP_MESSAGES = {
       file_error: 'File operation failed: {detail}',
       unexpected: 'Unexpected error: {detail}',
       not_listed: 'This file is not in the list, so nothing was done.',
+      translation_blocked: "YouTube is not providing the {name} machine translation right now (HTTP 429). This is a restriction YouTube puts on translations, not a result of too many requests, so waiting usually does not help. Try again later or download the original language.",
       network: 'Could not reach the app\'s internal server.',
     },
     themes: { ocean: 'Ocean', emerald: 'Emerald', amethyst: 'Amethyst', rose: 'Rose', amber: 'Amber', graphite: 'Graphite', midnight: 'Midnight', forest: 'Forest', wine: 'Wine' },
@@ -410,6 +415,7 @@ window.APP_MESSAGES = {
         ] },
         { title: "If something goes wrong", items: [
           "HTTP 429 error: the source site is temporarily limiting requests. Wait a few minutes and try again, or pick another language.",
+          "YouTube often refuses machine translations (Translations tab). The app then warns you at once; use Download the original to get the language the translation is made from, or try again later with Refresh and try again.",
           "If a download fails, the program refreshes the language list and retries once by itself. If it still fails, press the refresh-and-retry button on the row.",
           "Subtitles of DRM-protected, paid or login-only content cannot be downloaded.",
           "If no subtitles are found, the video has none in that language; check the Automatic and Translations tabs.",
