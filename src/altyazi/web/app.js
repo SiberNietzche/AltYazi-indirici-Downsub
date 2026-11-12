@@ -819,16 +819,32 @@
         if (still) launch(beam, i);
         else this.timers[i] = setTimeout(() => launch(beam, i), i * 900);
       }
+      // Yalnızca çalışan ışın duraklatılır ve yalnızca duraklatılan sürdürülür: bitmiş bir animasyonda
+      // play() onu baştan başlatır ve bitiş olayı ikinci kez gelince o ışının döngüsü çoğalır.
       this.visibility = () => {
-        this.animations.forEach((a) => a && (document.hidden ? a.pause() : a.play()));
+        this.animations.forEach((a) => {
+          if (!a) return;
+          if (document.hidden && a.playState === 'running') a.pause();
+          else if (!document.hidden && a.playState === 'paused') a.play();
+        });
       };
       document.addEventListener('visibilitychange', this.visibility);
+      // Durağan ışınlar pencere boyutuna göre yerleştirilir; boyut değişince yeniden dağıtılır.
+      if (still) {
+        this.resize = () => {
+          clearTimeout(this.resizeTimer);
+          this.resizeTimer = setTimeout(() => Array.from(this.$el.children).forEach(launch), 200);
+        };
+        window.addEventListener('resize', this.resize);
+      }
     },
     beforeDestroy() {
       this.stopped = true;
       (this.timers || []).forEach(clearTimeout);
+      clearTimeout(this.resizeTimer);
       (this.animations || []).forEach((a) => a && a.cancel());
       document.removeEventListener('visibilitychange', this.visibility);
+      if (this.resize) window.removeEventListener('resize', this.resize);
     },
   };
 
