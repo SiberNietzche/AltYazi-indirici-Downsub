@@ -22,6 +22,7 @@ SUN = 25.0  # Çelengin ortasındaki güneşin yarıçapı
 RAYS = (12, 33.0, 45.0, 3.0)  # Işın sayısı, başlangıç ve bitiş uzaklığı, yarı kalınlık
 BG = (12, 11, 16)
 YELLOW = (255, 208, 0)
+ICON_SIZES = (16, 24, 32, 48, 64, 128, 256)  # .ico içindeki boyutlar
 ORB = ((255, 6, 6), (21, 255, 0), (255, 47, 0))  # Amblemin içinde dönen ışığın renkleri
 
 
@@ -103,14 +104,48 @@ def pixel(x, y):
     return tuple(round(BG[i] * (1 - cover) + color[i] * cover) for i in range(3)) + (255,)
 
 
-def png():
-    rows = b"".join(b"\0" + b"".join(bytes(pixel(x, y)) for x in range(SIZE)) for y in range(SIZE))
+def render():
+    """256x256 RGBA piksel satırları."""
+    return [[pixel(x, y) for x in range(SIZE)] for y in range(SIZE)]
+
+
+def shrink(pixels, size):
+    """Alan ortalamasıyla küçültür; saydam kenarlar koyulaşmasın diye renk alfa ile ağırlıklanır."""
+    out = []
+    for y in range(size):
+        rows = pixels[y * SIZE // size:(y + 1) * SIZE // size]
+        row = []
+        for x in range(size):
+            block = [p for r in rows for p in r[x * SIZE // size:(x + 1) * SIZE // size]]
+            alpha = sum(p[3] for p in block)
+            if not alpha:
+                row.append((0, 0, 0, 0))
+                continue
+            row.append(tuple(round(sum(p[c] * p[3] for p in block) / alpha) for c in range(3)) + (round(alpha / len(block)),))
+        out.append(row)
+    return out
+
+
+def png(pixels):
+    size = len(pixels)
+    rows = b"".join(b"\0" + b"".join(bytes(p) for p in row) for row in pixels)
 
     def chunk(kind, data):
         return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
 
-    header = struct.pack(">IIBBBBB", SIZE, SIZE, 8, 6, 0, 0, 0)
+    header = struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0)
     return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(rows, 9)) + chunk(b"IEND", b"")
+
+
+def ico(pixels):
+    """Pencere, görev çubuğu ve kurulum dosyası her boyutta keskin görünsün diye birden çok boyut içerir."""
+    images = [png(pixels if size == SIZE else shrink(pixels, size)) for size in ICON_SIZES]
+    offset = 6 + 16 * len(images)
+    entries = b""
+    for size, image in zip(ICON_SIZES, images):
+        entries += struct.pack("<BBBBHHII", size % 256, size % 256, 0, 0, 1, 32, len(image), offset)
+        offset += len(image)
+    return struct.pack("<HHH", 0, 1, len(images)) + entries + b"".join(images)
 
 
 def svg():
@@ -140,16 +175,15 @@ def svg():
 
 
 def main(icon_path, svg_path=None, png_path=None):
-    image = png()
-    icon = struct.pack("<HHH", 0, 1, 1) + struct.pack("<BBBBHHII", 0, 0, 0, 0, 1, 32, len(image), 22) + image
+    pixels = render()
     with open(icon_path, "wb") as handle:
-        handle.write(icon)
+        handle.write(ico(pixels))
     if svg_path:
         with open(svg_path, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(svg())
     if png_path:
         with open(png_path, "wb") as handle:
-            handle.write(image)
+            handle.write(png(pixels))
 
 
 if __name__ == "__main__":

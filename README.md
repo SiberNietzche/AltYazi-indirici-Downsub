@@ -12,7 +12,7 @@ is available in Turkish, Kurdish (Kurmancî) and English and includes a built-in
 | Sistem | Dosya | Not |
 | --- | --- | --- |
 | Windows 10/11 (64 bit) | `AltyaziIndirici_<sürüm>_windows.exe` | WebView2 Runtime gerekir; Windows 11'de hazır gelir, yoksa kurulum sırasında indirilir |
-| Linux (64 bit) | `AltyaziIndirici_<sürüm>_linux.deb` (Debian, Ubuntu, Mint) veya `AltyaziIndirici_<sürüm>_linux.AppImage` (diğer dağıtımlar) | `.deb`: `sudo apt install ./dosya.deb`. AppImage: dosyayı çalıştırılabilir yapıp açın |
+| Linux (64 bit) | `AltyaziIndirici_<sürüm>_linux.deb` (Debian, Ubuntu, Mint) veya `AltyaziIndirici_<sürüm>_linux.AppImage` (diğer dağıtımlar) | Ubuntu 22.04 ve sonrası, Debian 12 ve sonrası, Mint 21 ve sonrası. `.deb`: `sudo apt install ./dosya.deb`. AppImage: dosyayı çalıştırılabilir yapıp açın |
 | Android 7 ve üstü | `AltyaziIndirici_<sürüm>_android.apk` | Telefonda "bilinmeyen kaynaklardan yükleme"ye izin vermek gerekir; Android 10 ve öncesinde depolama izni istenir |
 
 Dosyalar imzalı değildir. Windows SmartScreen uyarı gösterirse "Ek bilgi" ve ardından "Yine de
@@ -99,6 +99,10 @@ Python 3.11+, Rust, Node.js ve Tauri'nin sistem kitaplıkları gerekir (liste `b
 ```bash
 ./build.sh
 ```
+
+Paket, derlendiği sistemden eski dağıtımlarda açılmaz (glibc sürümü). Dağıtılacak paketi Ubuntu
+22.04'te derleyin; GitHub Actions iş akışı da öyle yapar. Ubuntu 22.04'ün Python'u 3.10 olduğu için
+3.11'i kurup `PYTHON=python3.11 ./build.sh` ile verin. Daha yeni bir sistemde derlenirse betik uyarır.
 
 Çıktı `dist` klasöründe `AltyaziIndirici_<sürüm>_linux.deb` ve `AltyaziIndirici_<sürüm>_linux.AppImage`
 olarak oluşur.

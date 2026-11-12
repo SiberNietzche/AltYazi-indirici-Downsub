@@ -6,10 +6,13 @@
   const tauri = window.__TAURI__ || null; // Yalnızca Tauri kabuğunda tanımlıdır
   // Android uygulamasında sayfa bir WebView içinde çalışır; AndroidHost'u uygulama sağlar.
   // Orada dosya yöneticisi ve klasör seçimi yoktur: "desktop-only" öğeler gizlenir.
-  // Telefonda hareketli arka plan ve bulanıklık ağır kalır; yerine sabit ışık kullanılır (style.css).
+  // Telefonda ve Linux'ta (WebKitGTK) bulanıklık ve sürekli animasyonlar ağır kalır; style.css bunları
+  // platform-android ve platform-linux sınıflarıyla kapatır.
   const android = window.AndroidHost || null;
   const mobile = !!android || /Android/.test(navigator.userAgent);
   if (mobile) document.documentElement.classList.add('platform-android');
+  const linux = !mobile && /Linux/.test(navigator.userAgent);
+  if (linux) document.documentElement.classList.add('platform-linux');
   const api = axios.create({ baseURL: '/api', headers: { 'X-App-Token': token }, timeout: 0 });
   // Sunucu hata kodu gönderir; metin, kullanıcının seçtiği dilde burada üretilir.
   const errorInfo = (err) => {
@@ -741,104 +744,91 @@
       </div>`,
   };
 
-  /* Arka plan: imleç hareket ettikçe arkasında dağılan renkli lekeler, tıklayınca
-     sıçrama (React Bits SplashCursor etkisinin yaklaşık karşılığı). Özgün bileşen WebGL ile tam
-     bir sıvı benzetimi yapar; burada aynı izlenim, sürüklenip dönen ve sönen yumuşak lekelerle
-     2B tuvalde verilir. Lekeler yokken çizim döngüsü durur. */
-  const SplashBackground = {
-    template: '<canvas class="splash-bg" aria-hidden="true"></canvas>',
+  /* Çizim grafik işlemcisi yerine yazılımla yapılıyorsa (sürücüsüz Linux, sanal makine, WSL) her
+     kıpırtı bütün pencerenin yeniden çizilmesine yol açar: ölçümde ışınlar tek başına dört çekirdeği
+     dolduruyordu. Bunu WebGL'in bildirdiği çiziciden anlarız; WebGL hiç yoksa da yazılım sayılır.
+     Linux'taki WebKitGTK gerçek çiziciyi gizler (her zaman "Apple GPU" der), o yüzden Linux'ta ışınlar
+     hep durağandır; orada sürücü sorunları ve yazılımla çizim yaygındır. */
+  function softwareRendering() {
+    try {
+      const gl = document.createElement('canvas').getContext('webgl');
+      if (!gl) return true;
+      const info = gl.getExtension('WEBGL_debug_renderer_info');
+      const renderer = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
+      const lose = gl.getExtension('WEBGL_lose_context');
+      if (lose) lose.loseContext();
+      return /llvmpipe|softpipe|swiftshader|software|basic render/i.test(renderer);
+    } catch (e) {
+      return true;
+    }
+  }
+
+  /* Arka plan: ince bir ızgara ve çizgileri boyunca kayan renkli ışınlar (GridBeam etkisinin
+     karşılığı). Hafif kalması için: ızgara bir kez boyanan sabit bir CSS degradesidir, ışınlar
+     yalnızca transform ile hareket eden küçük öğelerdir (çizimi GPU birleştirici yapar, her karede
+     yeniden boyama ya da bulanıklaştırma yoktur). Pencere gizliyken ışınlar durur; çizim yazılımla
+     yapılıyorsa ışınlar çizgilerin üzerinde durağan kalır. */
+  const GridBeamBackground = {
+    template: '<div class="grid-beam-bg" aria-hidden="true"></div>',
     mounted() {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      const canvas = this.$el;
-      const ctx = canvas.getContext('2d');
-      // Özgün bileşene verilen değerler size 1.4 ve trail 1.6 idi; iz daha sakin olsun diye azaltıldı.
-      const SIZE = 1, FORCE = 0.8, SWIRL = 1, TRAIL = 1.1, MOMENTUM = 0.6;
-      const SCALE = 0.5; // Bulanık görüntü için yarı çözünürlük yeterlidir
-      const sprites = ['#ff3d00', '#ff9100', '#ffd600'].map((color) => {
-        const sprite = document.createElement('canvas');
-        sprite.width = sprite.height = 128;
-        const g = sprite.getContext('2d');
-        const gradient = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-        gradient.addColorStop(0, color);
-        gradient.addColorStop(0.45, `${color}99`);
-        gradient.addColorStop(1, `${color}00`);
-        g.fillStyle = gradient;
-        g.fillRect(0, 0, 128, 128);
-        return sprite;
-      });
-      let blobs = [];
-      let last = null;
-      let previous = 0;
-      let next = 0;
-      const frame = (now) => {
-        const dt = Math.min((now - previous) / 1000, 0.05);
-        previous = now;
-        const dark = document.documentElement.classList.contains('dark-theme');
-        const retain = Math.pow(0.05 + MOMENTUM * 0.25, dt);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // Koyu zeminde renkler toplanarak parlar; açık zeminde toplama görünmez olduğu için üst üste boyanır.
-        ctx.globalCompositeOperation = dark ? 'lighter' : 'source-over';
-        blobs.forEach((b) => {
-          const angle = SWIRL * b.spin * 1.5 * dt;
-          const cos = Math.cos(angle), sin = Math.sin(angle);
-          const vx = (b.vx * cos - b.vy * sin) * retain;
-          b.vy = (b.vx * sin + b.vy * cos) * retain;
-          b.vx = vx;
-          b.x += b.vx * dt;
-          b.y += b.vy * dt;
-          b.r += 26 * SIZE * dt;
-          b.life -= dt / TRAIL;
-          if (b.life <= 0) return;
-          ctx.globalAlpha = (dark ? 0.36 : 0.6) * b.life * b.life;
-          ctx.drawImage(b.sprite, (b.x - b.r) * SCALE, (b.y - b.r) * SCALE, b.r * 2 * SCALE, b.r * 2 * SCALE);
-        });
-        blobs = blobs.filter((b) => b.life > 0);
-        this.raf = blobs.length ? requestAnimationFrame(frame) : null;
-      };
-      const spawn = (x, y, vx, vy, radius) => {
-        blobs.push({ x, y, vx, vy, r: radius * SIZE * (0.7 + Math.random() * 0.6), life: 1, spin: Math.random() * 2 - 1, sprite: sprites[next++ % sprites.length] });
-        if (blobs.length > 220) blobs.shift();
-        if (!this.raf) {
-          previous = performance.now();
-          this.raf = requestAnimationFrame(frame);
+      const CELL = 72; // style.css içindeki --grid-cell ile aynı olmalı
+      const COUNT = mobile ? 4 : 6; // Telefonda daha az ışın
+      const COLORS = ['#22d3ee', '#a78bfa', '#f472b6', '#fbbf24', '#34d399', '#60a5fa'];
+      const still = linux || softwareRendering();
+      this.animations = [];
+      this.timers = [];
+      const launch = (beam, index) => {
+        if (this.stopped) return;
+        const horizontal = Math.random() < 0.5;
+        const forward = Math.random() < 0.5;
+        const length = 90 + Math.random() * 90;
+        const span = horizontal ? window.innerWidth : window.innerHeight;
+        const lines = Math.max(1, Math.floor((horizontal ? window.innerHeight : window.innerWidth) / CELL));
+        const offset = (1 + Math.floor(Math.random() * lines)) * CELL;
+        const color = COLORS[index % COLORS.length];
+        beam.className = `beam ${horizontal ? 'h' : 'v'}${forward ? '' : ' rev'}`;
+        beam.style.setProperty('--beam', color);
+        beam.style.width = horizontal ? `${length}px` : '';
+        beam.style.height = horizontal ? '' : `${length}px`;
+        beam.style.left = horizontal ? '0' : `${offset}px`;
+        beam.style.top = horizontal ? `${offset}px` : '0';
+        const from = forward ? -length : span;
+        const to = forward ? span : -length;
+        const axis = horizontal ? 'X' : 'Y';
+        if (still) {
+          beam.style.transform = `translate${axis}(${Math.round(Math.random() * (span - length))}px)`;
+          return;
         }
+        const animation = beam.animate(
+          [{ transform: `translate${axis}(${from}px)` }, { transform: `translate${axis}(${to}px)` }],
+          { duration: (span + length) / (0.18 + Math.random() * 0.14), easing: 'linear' },
+        );
+        this.animations[index] = animation;
+        // Bir ışın bitince kısa bir aradan sonra başka bir çizgide yeniden doğar.
+        animation.onfinish = () => {
+          beam.style.transform = `translate${axis}(${to}px)`;
+          this.timers[index] = setTimeout(() => launch(beam, index), 400 + Math.random() * 2600);
+        };
       };
-      const splash = (x, y) => {
-        for (let i = 0; i < 9; i += 1) {
-          const angle = (i / 9) * Math.PI * 2 + Math.random() * 0.4;
-          const speed = 260 * FORCE * (0.5 + Math.random());
-          spawn(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, 46);
-        }
+      for (let i = 0; i < COUNT; i += 1) {
+        const beam = document.createElement('span');
+        beam.className = 'beam';
+        beam.style.transform = 'translateX(-9999px)';
+        this.$el.appendChild(beam);
+        if (still) launch(beam, i);
+        else this.timers[i] = setTimeout(() => launch(beam, i), i * 900);
+      }
+      this.visibility = () => {
+        this.animations.forEach((a) => a && (document.hidden ? a.pause() : a.play()));
       };
-      this.move = (event) => {
-        const point = { x: event.clientX, y: event.clientY };
-        if (!last) { last = point; return; }
-        const dx = point.x - last.x, dy = point.y - last.y;
-        const distance = Math.hypot(dx, dy);
-        if (distance < 4) return;
-        const steps = Math.min(2, Math.ceil(distance / 40));
-        for (let i = 1; i <= steps; i += 1) {
-          spawn(last.x + (dx * i) / steps, last.y + (dy * i) / steps,
-            dx * FORCE * 10 + Math.random() * 40 - 20, dy * FORCE * 10 + Math.random() * 40 - 20, 30);
-        }
-        last = point;
-      };
-      this.down = (event) => splash(event.clientX, event.clientY);
-      this.resize = () => {
-        canvas.width = Math.ceil(window.innerWidth * SCALE);
-        canvas.height = Math.ceil(window.innerHeight * SCALE);
-      };
-      window.addEventListener('pointermove', this.move, { passive: true });
-      window.addEventListener('pointerdown', this.down, { passive: true });
-      window.addEventListener('resize', this.resize);
-      this.resize();
-      splash(window.innerWidth / 2, window.innerHeight / 2); // Açılışta etkinin var olduğunu gösterir
+      document.addEventListener('visibilitychange', this.visibility);
     },
     beforeDestroy() {
-      cancelAnimationFrame(this.raf);
-      window.removeEventListener('pointermove', this.move);
-      window.removeEventListener('pointerdown', this.down);
-      window.removeEventListener('resize', this.resize);
+      this.stopped = true;
+      (this.timers || []).forEach(clearTimeout);
+      (this.animations || []).forEach((a) => a && a.cancel());
+      document.removeEventListener('visibilitychange', this.visibility);
     },
   };
 
@@ -865,7 +855,7 @@
     store,
     router,
     vuetify,
-    components: { SplashBackground },
+    components: { GridBeamBackground },
     data() { return { showToast: false, ready: false, mobile }; },
     computed: {
       toast() { return this.$store.state.toast; },
@@ -905,7 +895,7 @@
     },
     template: `
       <v-app :class="{ compact }" :style="{ visibility: ready ? 'visible' : 'hidden' }">
-        <splash-background v-if="!mobile"></splash-background>
+        <grid-beam-background></grid-beam-background>
         <button class="skip" type="button" @click="focusMain">{{ $t('nav.skip') }}</button>
         <v-navigation-drawer app permanent class="sidebar" width="224" mini-variant-width="64" :mini-variant="compact">
           <div class="brand">

@@ -17,6 +17,11 @@
     "active": true,
     "targets": ["nsis"],
     "icon": ["icons/icon.ico", "icons/icon.png"],
-    "externalBin": ["binaries/altyazi-server"]
+    "externalBin": ["binaries/altyazi-server"],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico"
+      }
+    }
   }
 }

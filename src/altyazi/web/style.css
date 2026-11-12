@@ -1,5 +1,5 @@
 /* Renk belirteçleri themes.js tarafından kök öğeye yazılır. Biçim belirteçleri (köşe, çerçeve,
-   yüzey, gölge) burada tanımlıdır. Yüzeyler yarı saydam camdır; düğmeler hap biçimindedir ve çerçevelerinden
+   yüzey, gölge) burada tanımlıdır. Yüzeyler arka planı hafifçe gösteren opak katmanlardır; düğmeler hap biçimindedir ve çerçevelerinden
    tema renginde ışık akar (dosyanın sonundaki "Işıklı hap çerçeve" bölümü). */
 :root {
   --btn-radius: 999px;
@@ -18,12 +18,14 @@
   --danger-shadow: none;
   --pressed-shadow: none;
   --press-transform: scale(.97);
-  --panel-bg: color-mix(in srgb, var(--surface) 62%, transparent);
+  /* Buzlu cam (backdrop-filter) kullanılmaz: altından ışın geçtikçe her karede yeniden bulanıklaştırılır
+     ve Windows'ta bile işlemciyi en çok yoran işti. Paneller bunun yerine daha opaktır. */
+  --panel-bg: color-mix(in srgb, var(--surface) 90%, transparent);
   --panel-border-w: 1px;
   --panel-border-color: color-mix(in srgb, var(--text) 14%, transparent);
   --panel-shadow: 0 10px 30px -14px var(--drop);
-  --panel-filter: blur(16px) saturate(1.4);
-  --sidebar-bg: color-mix(in srgb, var(--sidebar) 55%, transparent);
+  --panel-filter: none;
+  --sidebar-bg: var(--sidebar);
   --app-bg: var(--bg);
   /* Bu dosyadaki bütün yazı boyutları --font-scale ile çarpılır. */
   --font-family: Bahnschrift, "Segoe UI", system-ui, sans-serif;
@@ -141,8 +143,9 @@ main:focus, .v-main:focus, [tabindex="-1"]:focus { outline: none; }
   -webkit-mask: radial-gradient(circle, transparent calc(var(--emblem) * .2), #000 calc(var(--emblem) * .27));
   mask: radial-gradient(circle, transparent calc(var(--emblem) * .2), #000 calc(var(--emblem) * .27));
   filter: blur(calc(var(--emblem) * .05));
-  animation: emblem-spin 9s linear infinite;
 }
+/* Sürekli dönen amblem her karede yeniden çizim ister; ışık yalnızca imleç amblemin üzerindeyken döner. */
+.brand:hover .emblem::before { animation: emblem-spin 9s linear infinite; }
 @keyframes emblem-spin { to { transform: rotate(1turn); } }
 @media (prefers-reduced-motion: reduce) { .v-application .emblem::before { animation: none !important; } }
 .compact .brand { padding: 12px 0 8px; }
@@ -306,7 +309,9 @@ html.platform-android .mobile-only { display: block; }
 /* Işıklı hap çerçeve: düğme çerçevesi saydamdır; ışık, çerçeve kutusunda kayan tema vurgu
    renginde bir geçiştir, düğmenin içi yüzey rengiyle kapatılır. Yüzey kuralları !important olduğu
    için hareket kayıtlı --ring-x özelliği üzerinden yürür; onu kullanan belirteçler bu yüzden kök
-   yerine doğrudan öğelerde tanımlanır. */
+   yerine doğrudan öğelerde tanımlanır. Akış yalnızca imlecin üzerinde ya da klavye odağındaki öğede
+   döner: bu özelliğin canlandırılması her karede biçem hesabı ve yeniden boyama ister; ekrandaki bütün
+   düğmelerde birden sürekli dönmesi programın en ağır işiydi (ana iş parçacığının yaklaşık %70'i). */
 @property --ring-x { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
 :root .v-application .v-btn, :root .nav .v-list-item, :root .tab, :root .segmented button, :root .theme-card { --on-accent: var(--text); }
 :root .v-application .v-btn:not(.v-btn--icon),
@@ -318,6 +323,13 @@ html.platform-android .mobile-only { display: block; }
   --ring-layer: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 45%, var(--bg)), color-mix(in srgb, var(--accent) 10%, var(--bg)), color-mix(in srgb, var(--accent) 80%, #fff), var(--accent)) var(--ring-x) 0 / 300% 100% border-box;
   --face-bg: linear-gradient(var(--surface), var(--surface)) padding-box, var(--ring-layer);
   --accent-bg: linear-gradient(var(--ring-tint), var(--ring-tint)) padding-box, var(--ring-layer);
+}
+:root .v-application .v-btn:not(.v-btn--icon):is(:hover, :focus-visible),
+:root .v-application .round-button.v-btn:is(:hover, :focus-visible),
+:root .nav .v-list-item:is(:hover, :focus-visible),
+:root .tab:is(:hover, :focus-visible),
+:root .segmented button:is(:hover, :focus-visible),
+:root .theme-card:is(:hover, :focus-visible) {
   animation: ring-flow 4s linear infinite;
 }
 :root .v-application .v-btn.v-btn--disabled { animation: none; }
@@ -328,8 +340,31 @@ html.platform-android .mobile-only { display: block; }
 }
 .sidebar { backdrop-filter: var(--panel-filter); }
 
-/* Arka plan tuvali (app.js içindeki SplashBackground) */
-.splash-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; filter: blur(8px); pointer-events: none; }
+/* Izgara ışını arka planı (app.js içindeki GridBeamBackground). Izgara ve kenar sönmesi sabittir,
+   bir kez boyanır; ışınlar yalnızca transform ile hareket eder. Kenar sönmesi maske değil, ışınların
+   üstündeki sabit bir katmandır: maske, altındaki her kıpırtıda yeniden hesaplanırdı.
+   --grid-cell app.js'deki CELL ile aynıdır. */
+.grid-beam-bg {
+  --grid-cell: 72px;
+  --grid-line: color-mix(in srgb, var(--text) 8%, transparent);
+  position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-cell) var(--grid-cell);
+}
+.grid-beam-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, transparent 35%, var(--bg) 85%);
+}
+.grid-beam-bg .beam {
+  position: absolute; top: 0; left: 0; border-radius: 2px; will-change: transform;
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--beam) 55%, transparent);
+}
+.grid-beam-bg .beam.h { height: 1px; margin-top: 0; background: linear-gradient(to right, transparent, var(--beam) 70%, #fff); }
+.grid-beam-bg .beam.h.rev { background: linear-gradient(to left, transparent, var(--beam) 70%, #fff); }
+.grid-beam-bg .beam.v { width: 1px; background: linear-gradient(to bottom, transparent, var(--beam) 70%, #fff); }
+.grid-beam-bg .beam.v.rev { background: linear-gradient(to top, transparent, var(--beam) 70%, #fff); }
 
 /* Dar pencere */
 @media (max-width: 920px) {
@@ -361,27 +396,12 @@ html.platform-android .mobile-only { display: block; }
   .site-grid { grid-template-columns: 1fr 1fr; }
 }
 
-/* Android: hareketli arka plan, bulanıklık ve sürekli animasyonlar telefonu yorar. Arka plan sabit
-   bir ışıktır (kaymayan ayrı bir katman), paneller bulanıklık yerine daha opak çizilir, düğme
-   çerçevesindeki ışık ve amblem durağandır. */
-html.platform-android {
-  --panel-filter: none;
-  --panel-bg: color-mix(in srgb, var(--surface) 90%, transparent);
-  --sidebar-bg: var(--sidebar);
-  overflow-x: hidden;
-  background: var(--bg);
-}
-html.platform-android body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 85% 8%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 55%),
-    radial-gradient(circle at 10% 95%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%);
-}
-html.platform-android .sidebar { backdrop-filter: none; }
+/* Android ve Linux: telefonda ve WebKitGTK'de imleç üzerindeyken akan düğme ışığı ve dönen amblem
+   de ağırdır; orada hepsi durağandır. */
+html.platform-android { overflow-x: hidden; }
 html.platform-android .v-application .v-btn, html.platform-android .nav .v-list-item, html.platform-android .tab,
 html.platform-android .segmented button, html.platform-android .theme-card,
-html.platform-android .emblem::before { animation: none !important; }
+html.platform-android .emblem::before,
+html.platform-linux .v-application .v-btn, html.platform-linux .nav .v-list-item, html.platform-linux .tab,
+html.platform-linux .segmented button, html.platform-linux .theme-card,
+html.platform-linux .emblem::before { animation: none !important; }

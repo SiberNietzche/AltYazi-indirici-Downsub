@@ -6,10 +6,21 @@
 # Gerekenler: Python 3.11+, Rust, Node.js ve Tauri'nin sistem kitaplıkları. Debian/Ubuntu için:
 #   sudo apt install build-essential curl wget file libwebkit2gtk-4.1-dev libssl-dev \
 #     libxdo-dev libayatana-appindicator3-dev librsvg2-dev python3-venv
+#
+# Uyumluluk: program, derlendiği sistemin glibc sürümünü ve daha yenisini ister. Ubuntu 22.04'te
+# (glibc 2.35) derlenen paket Ubuntu 22.04, 24.04 ve sonrasında, Debian 12'de ve Mint 21+'da çalışır;
+# daha yeni bir sistemde derlenen paket eskilerde açılmaz. Dağıtılacak paketi bu yüzden Ubuntu 22.04'te
+# derleyin (GitHub Actions iş akışı da öyle yapar). Ubuntu 22.04'ün Python'u 3.10'dur; 3.11 kurup
+# PYTHON=python3.11 ./build.sh ile verin.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-[ -x .venv/bin/python ] || python3 -m venv .venv
+glibc=$(ldd --version | head -1 | awk '{print $NF}')
+if [ "$(printf '%s\n' "$glibc" 2.35 | sort -V | tail -1)" != 2.35 ]; then
+  echo "UYARI: glibc $glibc; bu paket Ubuntu 22.04 ve 24.04'te açılmaz (yukarıdaki uyumluluk notuna bakın)." >&2
+fi
+
+[ -x .venv/bin/python ] || "${PYTHON:-python3}" -m venv .venv
 py=.venv/bin/python
 
 "$py" -m pip install -q -r requirements.txt
