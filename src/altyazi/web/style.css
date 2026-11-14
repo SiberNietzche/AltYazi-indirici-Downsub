@@ -246,9 +246,9 @@ main:focus, .v-main:focus, [tabindex="-1"]:focus { outline: none; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
 
 /* Oynatma listesi */
-.options { display: grid; grid-template-columns: 160px auto 1fr; gap: 16px; align-items: end; }
+.options { display: grid; grid-template-columns: minmax(180px, 240px) minmax(180px, 240px) 1fr; gap: 16px; align-items: end; }
 .options .segmented button { height: 38px; }
-.options .check-label { display: flex; align-items: center; gap: 8px; min-height: 40px; cursor: pointer; font-size: calc(13px * var(--font-scale)); }
+.options .check-label { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; min-height: 40px; cursor: pointer; font-size: calc(13px * var(--font-scale)); }
 .progress-track { height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; margin: 10px 0 8px; }
 .progress-bar { height: 100%; background: var(--accent); transition: transform .3s ease-out; transform-origin: left; }
 .stats { display: flex; flex-wrap: wrap; gap: 24px; }
@@ -265,6 +265,8 @@ input[type="checkbox"] { width: 16px; height: 16px; flex: 0 0 16px; accent-color
 .failure .v-icon { font-size: calc(16px * var(--font-scale)); color: var(--danger); margin-right: 6px; vertical-align: -3px; }
 
 /* Hata */
+.playlist-hint { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 12px; }
+.playlist-hint .v-icon { color: var(--accent); }
 .error-box { display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; padding: 12px 16px; border: 1px solid var(--danger); background: var(--danger-soft); border-radius: 8px; font-size: calc(14px * var(--font-scale)); color: var(--text); }
 .error-box .v-icon { color: var(--danger); }
 

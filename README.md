@@ -88,8 +88,12 @@ Kaynak siteler sık değiştiği için program, altyazıları alan yt-dlp'yi ken
 - DRM ile korunan, ücretli veya oturum gerektiren içerikler indirilemez.
 - Kaynak siteler istekleri sınırlayabilir. YouTube makine çevirilerini (Çeviriler sekmesi)
   çoğu zaman ilk istekte bile HTTP 429 ile geri çevirir; bu sık istekten değil YouTube'un
-  çeviriye koyduğu kısıtlamadan kaynaklanır ve beklemek genellikle işe yaramaz. Program bunu hemen
-  bildirir ve çevirinin yapıldığı özgün dili indirmeyi önerir. Diğer altyazılarda 429 alınırsa
+  çeviriye koyduğu kısıtlamadan kaynaklanır ve beklemek genellikle işe yaramaz. Program bu durumda
+  çevirinin yapıldığı özgün altyazıyı indirip Google Çeviri ile çevirir: satırlar önce cümlelere
+  birleştirilir, çevrilir ve özgün zamanlamaya geri dağıtılır (yöntem MIT lisanslı
+  [yt-dual-subs](https://github.com/Gythiro/yt-dual-subs) eklentisinden uyarlanmıştır). Bu sırada
+  altyazı metni Google'a gönderilir. Google da yanıt vermezse program bunu bildirir ve özgün dili
+  indirmeyi önerir. Diğer altyazılarda 429 alınırsa
   birkaç dakika sonra yeniden denemek veya başka dil seçmek gerekir.
 - Siteler değiştikçe yt-dlp'nin güncellenmesi gerekir. Program bunu kendisi yapar (aşağıya
   bakın); kapatıldıysa ya da internet yoksa pakete gömülü sürüm kullanılır. Gömülü sürümü

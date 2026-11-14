@@ -35,6 +35,9 @@
       const track = { lang: params.lang, name: params.name || params.lang };
       params = Object.assign({}, params, { name: languageLabel(track, i18n.locale, i18n.t('tracks.original')) });
     }
+    if (info.code === 'no_language' && params.lang) {
+      params = Object.assign({}, params, { lang: languageLabel({ lang: params.lang, name: params.lang }, i18n.locale, '') });
+    }
     return i18n.t(`errors.${info.code}`, params);
   };
   const vuetify = new Vuetify({ icons: { iconfont: 'md' } });
@@ -92,7 +95,8 @@
   async function requestDownload(vm, payload) {
     const { data } = await api.post('/download', payload);
     refreshFiles();
-    notify(vm.$t('saved', { name: data.name }), 'success', data.path);
+    // YouTube çeviriyi engellediyse dosya, özgün altyazının Google Çeviri ile çevrilmesiyle üretilmiştir.
+    notify(vm.$t(data.google ? 'savedGoogle' : 'saved', { name: data.name }), 'success', data.path);
   }
 
   /* İndirme hatasını kullanıcının dilinde gösterir ve yenileyip yeniden denemeyi sunar. YouTube bir
@@ -155,6 +159,19 @@
     const label = nameIn(locale, code) || sourceName || nameIn('en', code) || track.name;
     return isOriginal ? `${label} (${originalText})` : label;
   };
+
+  /* Oynatma listesinde seçilebilen diller. Liste önceden bilinmediği için YouTube'un altyazı ve
+     makine çevirisi sunduğu yaygın diller kullanılır; adlar arayüz dilinde gösterilir. */
+  const PLAYLIST_LANGS = [
+    'af', 'am', 'ar', 'az', 'be', 'bg', 'bn', 'bs', 'ca', 'cs', 'cy', 'da', 'de', 'el', 'en', 'es', 'et', 'eu',
+    'fa', 'fi', 'fil', 'fr', 'ga', 'gl', 'gu', 'ha', 'hi', 'hr', 'hu', 'hy', 'id', 'is', 'it', 'iw', 'ja', 'ka',
+    'kk', 'km', 'kn', 'ko', 'ku', 'ky', 'lo', 'lt', 'lv', 'mk', 'ml', 'mn', 'mr', 'ms', 'my', 'ne', 'nl', 'no',
+    'pa', 'pl', 'ps', 'pt', 'ro', 'ru', 'si', 'sk', 'sl', 'so', 'sq', 'sr', 'sv', 'sw', 'ta', 'te', 'tg', 'th',
+    'tk', 'tr', 'uk', 'ur', 'uz', 'vi', 'yo', 'zh-Hans', 'zh-Hant', 'zu',
+  ];
+  const languageItems = (locale) => PLAYLIST_LANGS
+    .map((code) => ({ value: code, text: `${languageLabel({ lang: code, name: code }, locale, '')} (${code})` }))
+    .sort((a, b) => a.text.localeCompare(b.text, locale));
 
   const Segmented = {
     props: { value: String, options: Array, label: String },
@@ -339,6 +356,14 @@
           </div>
         </section>
 
+        <section v-if="video.playlist_url" id="playlist-hint" class="panel pad playlist-hint">
+          <v-icon aria-hidden="true">playlist_play</v-icon>
+          <div class="fill small">{{ $t('home.fromPlaylist') }}</div>
+          <v-btn small id="open-playlist" @click="$emit('open-playlist', video.playlist_url)">
+            <v-icon left small aria-hidden="true">playlist_add_check</v-icon>{{ $t('home.openPlaylist') }}
+          </v-btn>
+        </section>
+
         <section v-if="!video.tracks.length" class="panel note">{{ $t('home.noTracks') }}</section>
         <section v-else class="panel">
           <div class="tabs" role="tablist">
@@ -371,7 +396,8 @@
     props: { video: Object },
     data() {
       return {
-        selected: this.video.entries.map((e) => e.url), lang: 'tr', format: 'srt', allowAuto: true,
+        selected: this.video.entries.map((e) => e.url), format: 'srt', allowAuto: true,
+        lang: PLAYLIST_LANGS.includes(this.$i18n.locale) ? this.$i18n.locale : 'en', second: null,
         job: null, timer: null,
       };
     },
@@ -380,6 +406,8 @@
       percent() { return this.job && this.job.total ? this.job.done / this.job.total : 0; },
       failedCount() { return this.job && this.job.failures ? this.job.failures.length : 0; },
       formats() { return ['srt', 'vtt', 'txt', 'timed'].map((f) => ({ value: f, text: this.$t(`fmt.${f}`) })); },
+      languages() { return languageItems(this.$i18n.locale); },
+      same() { return !!this.second && this.second === this.lang; },
       stateLabel() {
         if (this.running) return this.$t('playlist.running');
         if (!this.job || this.job.state !== 'finished') return this.$t('playlist.cancelled');
@@ -398,6 +426,7 @@
         try {
           const { data } = await api.post('/playlist', {
             title: this.video.title, urls: this.selected, lang: this.lang, format: this.format, allow_auto: this.allowAuto,
+            second_lang: this.second || null,
           });
           this.job = { id: data.job, state: 'running', done: 0, saved: 0, total: this.selected.length, failures: [] };
           this.timer = setInterval(() => this.poll(data.job), 1000);
@@ -429,7 +458,11 @@
           <div class="options mt-4">
             <div>
               <label class="field-label" for="pl-lang">{{ $t('playlist.lang') }}</label>
-              <v-text-field id="pl-lang" v-model="lang" :hint="$t('playlist.langHint')" dense outlined hide-details></v-text-field>
+              <v-autocomplete id="pl-lang" v-model="lang" :items="languages" dense outlined hide-details></v-autocomplete>
+            </div>
+            <div>
+              <label class="field-label" for="pl-second">{{ $t('playlist.second') }}</label>
+              <v-autocomplete id="pl-second" v-model="second" :items="languages" dense outlined hide-details clearable></v-autocomplete>
             </div>
             <div>
               <span class="field-label">{{ $t('playlist.format') }}</span>
@@ -440,12 +473,14 @@
             </label>
           </div>
           <div class="actions">
-            <v-btn v-if="!running" id="playlist-start" depressed color="primary" :disabled="!selected.length || !lang.trim()" @click="start">
+            <v-btn v-if="!running" id="playlist-start" depressed color="primary" :disabled="!selected.length || !lang || same" @click="start">
               <v-icon left small aria-hidden="true">file_download</v-icon>{{ $t('playlist.start', { count: selected.length }) }}
             </v-btn>
             <v-btn v-else outlined class="btn-quiet" @click="cancel">
               <v-icon left small aria-hidden="true">close</v-icon>{{ $t('playlist.cancel') }}
             </v-btn>
+            <span v-if="same" class="small muted" role="status">{{ $t('errors.same_language') }}</span>
+            <span v-else-if="second" class="small muted">{{ $t('playlist.secondHint') }}</span>
           </div>
         </section>
 
@@ -513,6 +548,10 @@
         this.url = '';
         this.$store.commit('video', null);
       },
+      openPlaylist(link) {
+        this.url = link;
+        this.fetchInfo();
+      },
       async fetchInfo() {
         if (!this.url.trim() || this.loading) return;
         this.loading = true;
@@ -575,7 +614,7 @@
 
         <div v-if="video" class="mt-4">
           <playlist-panel v-if="video.is_playlist" :key="video.id" :video="video"></playlist-panel>
-          <video-result v-else :key="video.id" :video="video"></video-result>
+          <video-result v-else :key="video.id" :video="video" @open-playlist="openPlaylist"></video-result>
         </div>
       </div>`,
   };

@@ -16,6 +16,7 @@ import yt_dlp
 from yt_dlp.networking import Request
 
 from . import subtitles as subs
+from . import translate
 
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 _EXT_PRIORITY = ["json3", "vtt", "srt", "ttml", "dfxp", "srv3", "srv2", "srv1", "ass", "ssa"]
@@ -87,6 +88,18 @@ def _friendly_error(exc: Exception) -> EngineError:
     if "Sign in" in message or "login" in message.lower():
         return EngineError("login_required")
     return EngineError("source_error", retryable=True, detail=message[:400] or type(exc).__name__)
+
+
+def playlist_link(url: str) -> str | None:
+    """Listeden açılan bir YouTube izleme bağlantısının (watch?v=…&list=…) liste adresini verir."""
+    parts = urlsplit(url)
+    host = parts.netloc.lower().removeprefix("www.").removeprefix("m.").removeprefix("music.")
+    if host not in {"youtube.com", "youtu.be"}:
+        return None
+    playlist = (parse_qs(parts.query).get("list") or [""])[0]
+    if not re.fullmatch(r"[A-Za-z0-9_-]{2,64}", playlist):
+        return None
+    return f"https://www.youtube.com/playlist?list={playlist}"
 
 
 def validate_url(url: str) -> str:
@@ -203,7 +216,10 @@ class Engine:
                 for track in session.tracks.values()
             ],
             "entries": [],
+            "playlist_url": None,
         }
+        if not result["is_playlist"]:
+            result["playlist_url"] = playlist_link(session.url)
         if result["is_playlist"]:
             for entry in info.get("entries") or []:
                 if not entry:
@@ -306,8 +322,29 @@ class Engine:
                 raise first from None  # Tazeleme de olmazsa asıl hata gösterilir
             return action(_AFTER_REFRESH_DELAYS)
 
-    def render(self, session_id: str, key: str, fmt: str, second_key: str | None = None) -> tuple[bytes, str, str]:
-        """(içerik, uzantı, dosya adı kökü) döndürür."""
+    def _track_cues(self, session: Session, key: str) -> tuple[list[subs.Cue], bool]:
+        """Satırları ve Google Çeviri'ye başvurulup başvurulmadığını döndürür.
+
+        YouTube makine çevirisini 429 ile engellerse çevirinin yapıldığı özgün altyazı indirilir ve
+        Google Çeviri ile çevrilir. Google da olmazsa asıl engel hatası (özgün dil önerisiyle) kalır.
+        """
+        try:
+            return self._with_refresh(session, lambda delays: self._cues(session, key, delays)), False
+        except EngineError as blocked:
+            source = blocked.params.get("source")
+            if blocked.code != "translation_blocked" or not source:
+                raise
+            original = self._with_refresh(session, lambda delays: self._cues(session, source, delays))
+            try:
+                cues = translate.Translator().translate_cues(original, session.tracks[key]["lang"])
+            except translate.TranslateError:
+                raise blocked from None
+            if not cues:
+                raise blocked
+            return cues, True
+
+    def render(self, session_id: str, key: str, fmt: str, second_key: str | None = None) -> tuple[bytes, str, str, bool]:
+        """(içerik, uzantı, dosya adı kökü, Google Çeviri kullanıldı mı) döndürür."""
         session = self._session(session_id)
         track = session.tracks.get(key)
         if track is None:
@@ -318,23 +355,27 @@ class Engine:
             if second_key:
                 raise EngineError("dual_raw")
             data, ext = self._with_refresh(session, lambda delays: self._fetch_track(session, key, delays))
-            return data, subs.safe_filename(ext, "txt", 10), f"{stem}.{lang}"
+            return data, subs.safe_filename(ext, "txt", 10), f"{stem}.{lang}", False
         if fmt not in subs.WRITERS:
             raise EngineError("unknown_format")
         if second_key and second_key not in session.tracks:
             raise EngineError("track_missing")
-        cues = self._with_refresh(session, lambda delays: self._cues(session, key, delays))
+        cues, google = self._track_cues(session, key)
         if second_key:
             second_lang = subs.safe_filename(session.tracks[second_key]["lang"], "dil", 30)
-            second_cues = self._with_refresh(session, lambda delays: self._cues(session, second_key, delays))
+            second_cues, second_google = self._track_cues(session, second_key)
             cues = subs.merge_dual(cues, second_cues)
             lang = f"{lang}+{second_lang}"
+            google = google or second_google
         writer, ext = subs.WRITERS[fmt]
-        return writer(cues).encode("utf-8"), ext, f"{stem}.{lang}"
+        return writer(cues).encode("utf-8"), ext, f"{stem}.{lang}", google
 
-    def download(self, session_id: str, key: str, fmt: str, directory: Path, second_key: str | None = None) -> Path:
-        data, ext, stem = self.render(session_id, key, fmt, second_key)
-        return write_unique(directory, stem, ext, data)
+    def download(
+        self, session_id: str, key: str, fmt: str, directory: Path, second_key: str | None = None
+    ) -> tuple[Path, bool]:
+        """Dosyayı yazar; (yol, Google Çeviri kullanıldı mı) döndürür."""
+        data, ext, stem, google = self.render(session_id, key, fmt, second_key)
+        return write_unique(directory, stem, ext, data), google
 
     def pick_track(self, session_id: str, lang: str, allow_auto: bool) -> str | None:
         """İstenen dil için önce gerçek altyazıyı, izin varsa sonra otomatik olanı seçer."""
@@ -376,7 +417,11 @@ class JobManager:
         self._cancel: dict[str, threading.Event] = {}
         self._lock = threading.Lock()
 
-    def start(self, title: str, urls: list[str], lang: str, fmt: str, allow_auto: bool, directory: Path) -> str:
+    def start(
+        self, title: str, urls: list[str], lang: str, fmt: str, allow_auto: bool, directory: Path,
+        second_lang: str | None = None,
+    ) -> str:
+        """second_lang verilirse her video için iki dil tek dosyada birleştirilir (çift dil)."""
         job_id = uuid.uuid4().hex
         target = directory / subs.safe_filename(title, "oynatma-listesi", 100)
         job = {
@@ -386,11 +431,11 @@ class JobManager:
         with self._lock:
             self._jobs[job_id] = job
             self._cancel[job_id] = threading.Event()
-        args = (job, self._cancel[job_id], urls, lang, fmt, allow_auto, target)
+        args = (job, self._cancel[job_id], urls, lang, fmt, allow_auto, target, second_lang)
         threading.Thread(target=self._run, args=args, daemon=True).start()
         return job_id
 
-    def _run(self, job, cancel, urls, lang, fmt, allow_auto, target) -> None:
+    def _run(self, job, cancel, urls, lang, fmt, allow_auto, target, second_lang=None) -> None:
         for url in urls:
             if cancel.is_set():
                 job["state"] = "cancelled"
@@ -402,7 +447,12 @@ class JobManager:
                 key = self._engine.pick_track(info["id"], lang, allow_auto)
                 if key is None:
                     raise EngineError("no_language", lang=lang)
-                path = self._engine.download(info["id"], key, fmt, target)
+                second_key = None
+                if second_lang:
+                    second_key = self._engine.pick_track(info["id"], second_lang, allow_auto)
+                    if second_key is None:
+                        raise EngineError("no_language", lang=second_lang)
+                path, _ = self._engine.download(info["id"], key, fmt, target, second_key)
                 if self._on_saved:
                     self._on_saved(path)
                 job["saved"] += 1

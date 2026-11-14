@@ -197,26 +197,29 @@ class Handler(BaseHTTPRequestHandler):
         fmt = str(body.get("format", "srt"))
         if fmt not in ALLOWED_FORMATS:
             raise EngineError("unknown_format")
-        path = self.context.engine.download(
+        path, google = self.context.engine.download(
             str(body.get("id", "")), str(body.get("track", "")), fmt,
             self.context.settings.directory, body.get("second_track") or None,
         )
         self.context.library.record_written(path)
-        return {"path": str(path), "name": path.name, "size": path.stat().st_size}
+        return {"path": str(path), "name": path.name, "size": path.stat().st_size, "google": google}
 
     def _playlist(self, body: dict) -> dict:
         urls = body.get("urls")
         fmt = str(body.get("format", "srt"))
         lang = str(body.get("lang", "")).strip()
+        second_lang = str(body.get("second_lang") or "").strip() or None
         if not isinstance(urls, list) or not urls or not all(isinstance(u, str) for u in urls):
             raise EngineError("select_video")
         if not lang:
             raise EngineError("need_lang")
-        if fmt not in ALLOWED_FORMATS:
+        if fmt not in ALLOWED_FORMATS or (second_lang and fmt == "raw"):
             raise EngineError("unknown_format")
+        if second_lang and second_lang.lower() == lang.lower():
+            raise EngineError("same_language")
         job = self.context.jobs.start(
             str(body.get("title", "")), urls, lang, fmt, bool(body.get("allow_auto", True)),
-            self.context.settings.directory,
+            self.context.settings.directory, second_lang,
         )
         return {"job": job}
 
