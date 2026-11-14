@@ -145,6 +145,14 @@ cd android
 imzalamak için `android/keystore.properties` dosyasına `storeFile`, `storePassword`, `keyAlias` ve
 `keyPassword` yazıp `assembleRelease` çalıştırın; bu dosya ve anahtar depoya girmez.
 
+GitHub'daki derleme de aynı anahtarla imzalayabilir: depo ayarlarında (Settings > Secrets and
+variables > Actions) `ANDROID_KEYSTORE_BASE64` (anahtar dosyasının base64 hâli, örneğin
+`base64 -w0 anahtar.jks`), `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS` ve `ANDROID_KEY_PASSWORD`
+tanımlanırsa iş akışı imzalı yayın sürümü üretir. Bunlar yoksa hata ayıklama sürümü derlenir; GitHub
+her çalışmada yeni bir hata ayıklama anahtarı kullandığı için o APK önceki sürümün üzerine
+kurulamaz, önce eskisinin kaldırılması gerekir. Anahtar kaybolursa uygulama bir daha
+güncellenemez, bu yüzden yedeğini güvenli bir yerde saklayın.
+
 ### Derlemeden deneme
 
 Windows ve Linux betikleri, derleyicinin programa gömdüğü kaynak yollarındaki kullanıcı klasörünü
