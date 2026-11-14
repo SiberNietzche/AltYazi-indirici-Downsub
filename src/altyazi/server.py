@@ -13,7 +13,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from . import __version__
-from . import system, updater
+from . import release, system, updater
 from .engine import Engine, EngineError, JobManager
 from .library import Library
 
@@ -38,7 +38,7 @@ class Settings:
         self._lock = threading.Lock()
         self.data = {
             "download_dir": str(system.default_download_dir()), "theme": "ocean", "locale": "tr",
-            "auto_update": True,
+            "auto_update": True, "update_notice": True,
         }
         try:
             saved = json.loads(self._path.read_text("utf-8"))
@@ -54,8 +54,9 @@ class Settings:
             self.data["theme"] = saved["theme"]
         elif saved.get("dark"):  # Eski sürümün koyu tema tercihi korunur
             self.data["theme"] = "graphite"
-        if isinstance(saved.get("auto_update"), bool):
-            self.data["auto_update"] = saved["auto_update"]
+        for key in ("auto_update", "update_notice"):
+            if isinstance(saved.get(key), bool):
+                self.data[key] = saved[key]
 
     def update(self, values: dict) -> dict:
         with self._lock:
@@ -72,10 +73,11 @@ class Settings:
                 if values["locale"] not in LOCALES:
                     raise EngineError("unknown_locale")
                 self.data["locale"] = values["locale"]
-            if "auto_update" in values:
-                if not isinstance(values["auto_update"], bool):
-                    raise EngineError("invalid_request")
-                self.data["auto_update"] = values["auto_update"]
+            for key in ("auto_update", "update_notice"):
+                if key in values:
+                    if not isinstance(values[key], bool):
+                        raise EngineError("invalid_request")
+                    self.data[key] = values[key]
             self._path.parent.mkdir(parents=True, exist_ok=True)
             self._path.write_text(json.dumps(self.data, ensure_ascii=False, indent=2), "utf-8")
             return dict(self.data)
@@ -187,6 +189,19 @@ class Handler(BaseHTTPRequestHandler):
     def _update_check(self, _body: dict) -> dict:
         return updater.check(self.context.settings.data["auto_update"], force=True)
 
+    def _app_update(self, _body: dict) -> dict:
+        return release.status(self.context.settings.data["update_notice"])
+
+    def _app_update_check(self, _body: dict) -> dict:
+        return release.check(self.context.settings.data["update_notice"], force=True)
+
+    def _app_update_dismiss(self, body: dict) -> dict:
+        release.dismiss(str(body.get("version", "")))
+        return self._app_update(body)
+
+    def _app_update_open(self, _body: dict) -> dict:
+        return {"url": release.open_download()}
+
     def _info(self, body: dict) -> dict:
         return self.context.engine.open(str(body.get("url", "")))
 
@@ -261,6 +276,10 @@ class Handler(BaseHTTPRequestHandler):
         ("POST", "/api/settings"): _settings_set,
         ("GET", "/api/update"): _update_status,
         ("POST", "/api/update/check"): _update_check,
+        ("GET", "/api/app-update"): _app_update,
+        ("POST", "/api/app-update/check"): _app_update_check,
+        ("POST", "/api/app-update/dismiss"): _app_update_dismiss,
+        ("POST", "/api/app-update/open"): _app_update_open,
         ("POST", "/api/info"): _info,
         ("POST", "/api/refresh"): _refresh,
         ("POST", "/api/download"): _download,

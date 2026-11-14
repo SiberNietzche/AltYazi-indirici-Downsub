@@ -12,7 +12,7 @@ import sys
 import threading
 import webbrowser
 
-from . import updater
+from . import release, updater
 
 
 def _guard_streams() -> None:
@@ -56,6 +56,7 @@ def main() -> int:
     if args.serve and args.exit_with_stdin and stdin is not None:
         threading.Thread(target=_exit_when_stdin_closes, daemon=True).start()
     updater.check_later(lambda: context.settings.data["auto_update"])
+    release.check_later(lambda: context.settings.data["update_notice"])
     print(url, flush=True)
     if not args.serve:
         webbrowser.open(url)

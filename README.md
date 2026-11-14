@@ -36,7 +36,10 @@ program içindeki **Kılavuz** sayfasındadır.
 - SRT, VTT, TXT, zaman damgalı TXT ve özgün (RAW) biçimde indirme
 - Gerçek altyazılar, otomatik altyazılar ve kaynak sitenin sunduğu otomatik çeviriler
 - İki dili tek dosyada birleştiren çift dilli altyazı
-- Oynatma listesi ve kanal indirme (en fazla 500 video)
+- Oynatma listesi ve kanal indirme (en fazla 500 video): dil menüden seçilir, isteğe bağlı ikinci
+  dille her video çift dilli indirilir; listeden açılan bir video bağlantısında listenin tamamı
+  tek düğmeyle açılır
+- YouTube bir makine çevirisini engellerse özgün altyazı Google Çeviri ile çevrilir
 - Türkçe, Kürtçe (Kurmancî) ve İngilizce arayüz; program içinde adım adım kullanım kılavuzu
 - Beş açık ve dört koyu renk teması
 - Aranabilir dil listesi; dil adları Türkçe ve İngilizce arayüzde o dilde görünür,
@@ -50,6 +53,7 @@ program içindeki **Kılavuz** sayfasındadır.
 - Tüm hata mesajları seçili arayüz dilinde
 - Var olan dosyaların üzerine yazmama
 - Altyazı motoru (yt-dlp) internete bağlıyken kendiliğinden güncellenir
+- Programın yeni sürümü çıkınca uygulama içinde bildirim
 
 ## Altyazı motorunun güncellenmesi
 
@@ -63,18 +67,26 @@ Kaynak siteler sık değiştiği için program, altyazıları alan yt-dlp'yi ken
 - İndirilen sürüm açılışta yüklenemezse program kendiliğinden gömülü sürüme döner ve o sürümü bir
   daha indirmez. Programın yeni bir sürümü daha yeni bir yt-dlp ile gelirse indirilen eski sürüm
   silinir.
-- Programın kendisi güncellenmez; yeni sürümleri GitHub'daki Releases sayfasından alın.
+- Programın kendisi kendiliğinden kurulmaz. Bunun yerine açılıştan birkaç saniye sonra, günde en
+  fazla bir kez GitHub'daki son sürüme bakılır; yeni sürüm varsa üstte bir bildirim çıkar.
+  **İndir** Windows'ta kurulum dosyasını, Android'de APK'yı indirir, Linux'ta sürüm sayfasını açar.
+  Yeni sürüm eskisinin üzerine kurulur, ayarlar korunur. Bildirim **Ayarlar > Yeni sürümleri
+  bildir** ile kapatılabilir. (1.0.0 sürümünde bu bildirim yoktur.)
 
 ## Gizlilik
 
 - Program kullanım verisi toplamaz, hesap istemez ve hiçbir yere bilgi göndermez.
-- İnternete yalnızca iki yere bağlanır:
+- İnternete yalnızca şu yerlere bağlanır:
   - yapıştırdığınız bağlantının kaynak sitesi: video bilgisi, küçük resim ve altyazı oradan
     alınır. Kaynak site bu istekleri kendi kurallarına göre görür;
   - altyazı motorunun güncellemesi açıksa (varsayılan) günde en fazla bir kez PyPI
     (`pypi.org`, `files.pythonhosted.org`): yalnızca yt-dlp'nin son sürüm bilgisi istenir ve
     yeni sürüm varsa paket indirilir. İstekte program adı ve sürümünden başka bilgi yoktur.
-    **Ayarlar**'dan kapatılabilir.
+    **Ayarlar**'dan kapatılabilir;
+  - yeni sürüm bildirimi açıksa (varsayılan) günde en fazla bir kez GitHub (`api.github.com`):
+    yalnızca programın son sürüm bilgisi istenir. **Ayarlar**'dan kapatılabilir;
+  - yalnızca YouTube bir makine çevirisini engellediğinde Google Çeviri
+    (`translate.googleapis.com`, `clients5.google.com`): çevrilecek altyazı metni gönderilir.
 - Arayüz ile motor aynı bilgisayarda, yalnızca `127.0.0.1` üzerinden ve her açılışta yeniden
   üretilen bir anahtarla konuşur; ağdaki başka cihazlar erişemez.
 - Ayarlar ve indirilenler listesi yalnızca kendi cihazınızda tutulur: Windows'ta
@@ -149,6 +161,13 @@ cd android
 imzalamak için `android/keystore.properties` dosyasına `storeFile`, `storePassword`, `keyAlias` ve
 `keyPassword` yazıp `assembleRelease` çalıştırın; bu dosya ve anahtar depoya girmez.
 
+Yayımlanan APK'lar her zaman aynı anahtarla imzalanmalıdır: Android, farklı anahtarla imzalanmış bir
+sürümü kurulu uygulamanın üzerine kurmaz; kullanıcılar uygulamayı kaldırıp yeniden kurmak zorunda kalır.
+Bu yüzden yayın APK'sı her zaman `assembleRelease` ile, yayın anahtarının bulunduğu bilgisayarda
+derlenir. GitHub Actions'ın ürettiği APK her seferinde başka bir geçici anahtarla imzalanır; yalnızca
+derlemenin çalıştığını sınamak içindir, yayımlanmamalıdır. `versionCode` sürüm numarasından hesaplanır
+(1.2.3 → 10203); yeni sürümün kodu kurulu olandan büyük olmalıdır.
+
 ### Derlemeden deneme
 
 Windows ve Linux betikleri, derleyicinin programa gömdüğü kaynak yollarındaki kullanıcı klasörünü
@@ -177,6 +196,8 @@ aynı arayüz bir web görünümünde gösterilir.
 | `src/altyazi/subtitles.py` | Altyazı ayrıştırma ve dönüştürme |
 | `src/altyazi/engine.py` | yt-dlp bağlantısı, indirme ve liste işleri |
 | `src/altyazi/updater.py` | yt-dlp'nin PyPI'den kendiliğinden güncellenmesi |
+| `src/altyazi/release.py` | Programın yeni sürümünün GitHub'dan denetlenip bildirilmesi |
+| `src/altyazi/translate.py` | Engellenen çeviriler için Google Çeviri yedeği |
 | `src/altyazi/library.py` | İndirilenler listesi, gizleme ve çöp kutusuna taşıma |
 | `src/altyazi/system.py` | İşletim sistemine bağlı işler: klasör yerleri, çöp kutusu, dosya yöneticisi |
 | `src/altyazi/server.py` | Yalnızca 127.0.0.1'e açık, anahtarlı yerel API |

@@ -265,6 +265,8 @@ input[type="checkbox"] { width: 16px; height: 16px; flex: 0 0 16px; accent-color
 .failure .v-icon { font-size: calc(16px * var(--font-scale)); color: var(--danger); margin-right: 6px; vertical-align: -3px; }
 
 /* Hata */
+.update-banner { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 16px 24px 0; padding: 10px 16px; border: 1px solid var(--accent); border-radius: 12px; background: var(--surface); color: var(--text); font-size: calc(14px * var(--font-scale)); }
+.update-banner .v-icon { color: var(--accent); }
 .playlist-hint { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 12px; }
 .playlist-hint .v-icon { color: var(--accent); }
 .error-box { display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; padding: 12px 16px; border: 1px solid var(--danger); background: var(--danger-soft); border-radius: 8px; font-size: calc(14px * var(--font-scale)); color: var(--text); }

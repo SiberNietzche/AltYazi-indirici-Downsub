@@ -18,6 +18,14 @@ window.APP_MESSAGES = {
       hint: 'İki dili zamanlarına göre tek dosyada birleştirir. Her satırda önce üst dil, altında alt dil görünür.',
       first: 'Üst satır dili', second: 'Alt satır dili', download: 'Çift dilli indir', same: 'İki farklı dil seçin.',
     },
+    appUpdate: {
+      available: 'Altyazı İndirici\'nin yeni sürümü çıktı: {version} (kullandığınız: {current}).',
+      get: 'İndir', later: 'Sonra',
+      setting: 'Yeni sürümleri bildir',
+      settingHint: "Program günde en fazla bir kez GitHub'daki son sürüme bakar ve yeni sürüm varsa üstte bildirir. İndirip kurmayı siz yaparsınız; ayarlarınız korunur.",
+      settingsAvailable: 'Programın yeni sürümü var: {version}.', latest: 'Program güncel.',
+      error: 'Programın yeni sürümü denetlenemedi.',
+    },
     playlist: {
       videos: '{count} video', lang: 'Dil', langHint: 'Örneğin tr veya en', format: 'Biçim',
       second: 'İkinci dil (isteğe bağlı)', secondHint: 'Seçerseniz her video için iki dil tek dosyada alt alta birleştirilir.',
@@ -163,6 +171,14 @@ window.APP_MESSAGES = {
       hint: 'Du zimanan li gorî demê di yek pelî de dike yek. Di her rêzê de pêşî zimanê jorîn, li binê wî zimanê jêrîn xuya dibe.',
       first: 'Zimanê rêza jorîn', second: 'Zimanê rêza jêrîn', download: 'Bi du zimanan daxe', same: 'Du zimanên cuda hilbijêre.',
     },
+    appUpdate: {
+      available: 'Guhertoya nû ya Altyazı İndirici derket: {version} (ya te: {current}).',
+      get: 'Daxe', later: 'Paşê',
+      setting: 'Guhertoyên nû ragihîne',
+      settingHint: 'Bername rojê herî zêde carekê li guhertoya dawî ya li ser GitHub dinêre û heke guhertoya nû hebe li jor radigihîne. Daxistin û sazkirin bi te ye; mîhengên te diparêzin.',
+      settingsAvailable: 'Guhertoya nû ya bernameyê heye: {version}.', latest: 'Bername rojane ye.',
+      error: 'Guhertoya nû ya bernameyê nehat kontrolkirin.',
+    },
     playlist: {
       videos: '{count} vîdyo', lang: 'Ziman', langHint: 'Wek ku, tr an en', format: 'Format',
       second: 'Zimanê duyem (bijarte)', secondHint: 'Heke tu hilbijêrî, ji bo her vîdyoyê du ziman di yek pelê de li bin hev têne berhevkirin.',
@@ -307,6 +323,14 @@ window.APP_MESSAGES = {
     dual: {
       hint: 'Combines two languages into one file by timing. Each line shows the top language with the bottom one beneath it.',
       first: 'Top line language', second: 'Bottom line language', download: 'Download dual', same: 'Choose two different languages.',
+    },
+    appUpdate: {
+      available: 'A new version of Altyazı İndirici is out: {version} (you have {current}).',
+      get: 'Download', later: 'Later',
+      setting: 'Notify about new versions',
+      settingHint: 'At most once a day the app checks the latest release on GitHub and shows a notice if there is a new one. You download and install it yourself; your settings are kept.',
+      settingsAvailable: 'A new version of the app is available: {version}.', latest: 'The app is up to date.',
+      error: 'Could not check for a new version of the app.',
     },
     playlist: {
       videos: '{count} videos', lang: 'Language', langHint: 'For example en or tr', format: 'Format',

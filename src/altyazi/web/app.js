@@ -57,7 +57,7 @@
   const store = new Vuex.Store({
     state: {
       settings: { download_dir: '', theme: 'ocean', locale: 'tr', version: '', auto_update: true },
-      video: null, url: '', toast: null, files: [], hiddenFiles: 0,
+      video: null, url: '', toast: null, files: [], hiddenFiles: 0, appUpdate: null,
     },
     mutations: {
       settings(state, value) { state.settings = Object.assign({}, state.settings, value); },
@@ -65,6 +65,7 @@
       url(state, value) { state.url = value; },
       toast(state, value) { state.toast = value; },
       files(state, value) { state.files = value.files; state.hiddenFiles = value.hidden; },
+      appUpdate(state, value) { state.appUpdate = value; },
     },
     actions: {
       async loadSettings({ commit }) {
@@ -79,6 +80,15 @@
       async loadFiles({ commit }) {
         const { data } = await api.get('/files');
         commit('files', data);
+      },
+      async loadAppUpdate({ commit }) {
+        const { data } = await api.get('/app-update');
+        commit('appUpdate', data);
+      },
+      async checkAppUpdate({ commit }) {
+        const { data } = await api.post('/app-update/check', {});
+        commit('appUpdate', data);
+        return data;
       },
       async refreshVideo({ commit }, id) {
         const { data } = await api.post('/refresh', { id });
@@ -756,6 +766,18 @@
         get() { return this.settings.auto_update === false ? 'off' : 'on'; },
         set(value) { this.$store.dispatch('saveSettings', { auto_update: value === 'on' }).then(this.loadUpdate).catch(notifyError); },
       },
+      updateNotice: {
+        get() { return this.settings.update_notice === false ? 'off' : 'on'; },
+        set(value) { this.$store.dispatch('saveSettings', { update_notice: value === 'on' }).catch(notifyError); },
+      },
+      appUpdateText() {
+        const u = this.$store.state.appUpdate;
+        if (!u || this.checking) return '';
+        if (u.available) return this.$t('appUpdate.settingsAvailable', { version: u.latest });
+        if (u.state === 'error') return this.$t('appUpdate.error');
+        if (u.state === 'done') return this.$t('appUpdate.latest');
+        return '';
+      },
       onOff() { return [{ value: 'on', text: this.$t('settings.on') }, { value: 'off', text: this.$t('settings.off') }]; },
       // Motorun durumu: indirilen yeni sürüm program yeniden açılınca kullanılır.
       updateText() {
@@ -788,7 +810,8 @@
       async checkNow() {
         this.checking = true;
         try {
-          this.update = (await api.post('/update/check', {})).data;
+          const [engine] = await Promise.all([api.post('/update/check', {}), this.$store.dispatch('checkAppUpdate')]);
+          this.update = engine.data;
         } catch (err) {
           notifyError(err);
         } finally {
@@ -856,10 +879,15 @@
             <segmented v-model="autoUpdate" :options="onOff" :label="$t('settings.autoUpdate')"></segmented>
           </div>
           <div class="setting">
+            <div class="setting-text"><div class="setting-name">{{ $t('appUpdate.setting') }}</div><div class="small muted">{{ $t('appUpdate.settingHint') }}</div></div>
+            <segmented v-model="updateNotice" :options="onOff" :label="$t('appUpdate.setting')"></segmented>
+          </div>
+          <div class="setting">
             <div class="setting-text">
               <div class="setting-name">{{ $t('settings.about') }}</div>
               <div class="small muted">{{ $t('settings.version', { version: settings.version, engine: update ? update.version : '' }) }}</div>
               <div v-if="updateText" class="small muted" role="status" data-update-status>{{ updateText }}</div>
+              <div v-if="appUpdateText" class="small muted" role="status" data-app-update-status>{{ appUpdateText }}</div>
             </div>
             <v-btn outlined class="btn-quiet" :loading="checking" @click="checkNow">{{ $t('settings.checkNow') }}</v-btn>
           </div>
@@ -1003,6 +1031,10 @@
       folder() { return this.$store.state.settings.download_dir; },
       compact() { return this.$vuetify.breakpoint.width < 920; },
       fileCount() { return this.$store.state.files.length; },
+      appUpdate() {
+        const u = this.$store.state.appUpdate;
+        return u && u.available && !u.dismissed && this.$store.state.settings.update_notice !== false ? u : null;
+      },
       navItems() {
         return [
           { to: '/', icon: 'subtitles', label: this.$t('nav.download'), exact: true },
@@ -1027,9 +1059,25 @@
       // Ayarlar gelene kadar arayüz gizli kalır; böylece açılışta yanlış tema görünmez.
       this.$store.dispatch('loadSettings').catch(notifyError).finally(() => { this.ready = true; });
       refreshFiles();
+      // Sunucu son sürümü açılıştan birkaç saniye sonra denetler; sonuç biraz sonra yeniden okunur.
+      const loadUpdate = () => this.$store.dispatch('loadAppUpdate').catch(() => {});
+      loadUpdate();
+      this.updateTimer = setTimeout(loadUpdate, 20000);
     },
+    beforeDestroy() { clearTimeout(this.updateTimer); },
     methods: {
       reveal,
+      // Android'de uygulama dışı bağlantılar web görünümünden tarayıcıya aktarılır (MainActivity);
+      // masaüstünde adresi sunucu sistemin tarayıcısında açar.
+      getUpdate() {
+        const u = this.appUpdate;
+        if (android) window.location.href = u.download || u.page;
+        else api.post('/app-update/open', {}).catch(notifyError);
+      },
+      dismissUpdate() {
+        api.post('/app-update/dismiss', { version: this.appUpdate.latest })
+          .then(({ data }) => this.$store.commit('appUpdate', data)).catch(notifyError);
+      },
       focusMain() { if (this.$refs.main) this.$refs.main.focus({ preventScroll: false }); },
     },
     template: `
@@ -1060,6 +1108,14 @@
         </v-navigation-drawer>
         <v-main>
           <div ref="main" tabindex="-1">
+            <div v-if="appUpdate" id="app-update" class="update-banner" role="status">
+              <v-icon aria-hidden="true">system_update_alt</v-icon>
+              <div class="fill break">{{ $t('appUpdate.available', { version: appUpdate.latest, current: appUpdate.current }) }}</div>
+              <v-btn small depressed color="primary" data-update-get @click="getUpdate">
+                <v-icon left small aria-hidden="true">file_download</v-icon>{{ $t('appUpdate.get') }}
+              </v-btn>
+              <v-btn small text data-update-later @click="dismissUpdate">{{ $t('appUpdate.later') }}</v-btn>
+            </div>
             <keep-alive><router-view></router-view></keep-alive>
           </div>
         </v-main>

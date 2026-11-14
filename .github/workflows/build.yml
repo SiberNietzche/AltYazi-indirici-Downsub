@@ -73,11 +73,14 @@ jobs:
         run: |
           python -m pip install -q "$(grep '^yt-dlp' requirements.txt)"
           python -m unittest discover -s tests
-      - name: Derle
+      # Buradaki APK her seferinde başka bir geçici anahtarla imzalanır ve kurulu uygulamanın üzerine
+      # kurulamaz. Yalnızca derlemenin çalıştığını sınamak içindir; yayın APK'sı yayın anahtarının
+      # bulunduğu bilgisayarda assembleRelease ile derlenir (bkz. README, Android).
+      - name: Derle (yalnızca sınama)
         working-directory: android
         run: ./gradlew assembleDebug --console=plain
       - uses: actions/upload-artifact@v4
         with:
-          name: android
+          name: android-yalnizca-sinama-yayimlamayin
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error

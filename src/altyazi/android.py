@@ -35,5 +35,8 @@ def start(data_dir: str, download_dir: str) -> str:
             server = create_server(context, 0)
             threading.Thread(target=server.serve_forever, name="altyazi-server", daemon=True).start()
             updater.check_later(lambda: context.settings.data["auto_update"])
+            from . import release
+
+            release.check_later(lambda: context.settings.data["update_notice"])
             _url = f"http://127.0.0.1:{server.server_address[1]}/?token={context.token}"
         return _url
