@@ -32,8 +32,9 @@ jobs:
           if-no-files-found: error
 
   macos:
-    # Apple Silicon makinesinde tek bir universal (arm64 + x86_64) .dmg derlenir.
-    runs-on: macos-latest
+    # Tek bir universal (arm64 + x86_64) .dmg derlenir. GitHub'ın Apple Silicon makineleri sık sık
+    # kapasite yüzünden sırada kaldığı için Intel makinesi kullanılır; çıktı iki mimaride de aynıdır.
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
       # actions/setup-python yalnızca makinenin mimarisini kurar; universal2 yan süreç için
@@ -53,18 +54,22 @@ jobs:
         env:
           PYTHON: /Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11
         run: ./build_macos.sh
-      # Yan süreç iki mimaride de açılabilmeli: arm64 doğrudan, x86_64 Rosetta ile denenir.
-      - name: Sına (arm64 ve x86_64)
+      # Uygulama ve yan süreç iki mimariyi de içermeli; makinenin kendi mimarisinde açılabilmeli.
+      # Apple Silicon makinesinde x86_64 kısmı Rosetta ile de denenir (Intel'de arm64 çalıştırılamaz).
+      - name: Sına
         run: |
           app=$(ls -d src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app)
           server="$app/Contents/MacOS/altyazi-server"
-          lipo -info "$server"
+          for binary in "$app"/Contents/MacOS/*; do
+            lipo -info "$binary"
+            lipo "$binary" -verify_arch arm64 x86_64
+          done
           codesign --verify --deep --verbose=2 "$app"
-          arch -arm64 "$server" --help
-          if ! arch -x86_64 /usr/bin/true 2>/dev/null; then
-            softwareupdate --install-rosetta --agree-to-license
+          "$server" --help
+          if [ "$(uname -m)" = arm64 ]; then
+            arch -x86_64 /usr/bin/true 2>/dev/null || softwareupdate --install-rosetta --agree-to-license
+            arch -x86_64 "$server" --help
           fi
-          arch -x86_64 "$server" --help
       - uses: actions/upload-artifact@v4
         with:
           name: macos
