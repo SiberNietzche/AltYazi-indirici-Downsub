@@ -1,10 +1,10 @@
 # Altyazı İndirici
 
-Video bağlantısından altyazı indiren program: Windows, Linux ve Android. Altyazılar açık kaynak
+Video bağlantısından altyazı indiren program: Windows, macOS, Linux ve Android. Altyazılar açık kaynak
 [yt-dlp](https://github.com/yt-dlp/yt-dlp) ile doğrudan kaynak siteden alınır; arada
 başka bir sunucu kullanılmaz.
 
-*An app for Windows, Linux and Android that downloads subtitles from a video link with yt-dlp. The interface
+*An app for Windows, macOS, Linux and Android that downloads subtitles from a video link with yt-dlp. The interface
 is available in Turkish, Kurdish (Kurmancî) and English and includes a built-in user guide.*
 
 ## Kurulum
@@ -12,12 +12,18 @@ is available in Turkish, Kurdish (Kurmancî) and English and includes a built-in
 | Sistem | Dosya | Not |
 | --- | --- | --- |
 | Windows 10/11 (64 bit) | `AltyaziIndirici_<sürüm>_windows.exe` | WebView2 Runtime gerekir; Windows 11'de hazır gelir, yoksa kurulum sırasında indirilir |
+| macOS 10.15 ve sonrası (Apple Silicon ve Intel) | `AltyaziIndirici_<sürüm>_macos.dmg` | Tek dosya iki işlemcide de çalışır (universal). `.dmg`'yi açıp uygulamayı Uygulamalar klasörüne sürükleyin; ilk açılış için aşağıdaki nota bakın |
 | Linux (64 bit) | `AltyaziIndirici_<sürüm>_linux.deb` (Debian, Ubuntu, Mint) veya `AltyaziIndirici_<sürüm>_linux.AppImage` (diğer dağıtımlar) | Ubuntu 22.04 ve sonrası, Debian 12 ve sonrası, Mint 21 ve sonrası. `.deb`: `sudo apt install ./dosya.deb`. AppImage: dosyayı çalıştırılabilir yapıp açın |
 | Android 7 ve üstü | `AltyaziIndirici_<sürüm>_android.apk` | Telefonda "bilinmeyen kaynaklardan yükleme"ye izin vermek gerekir; Android 10 ve öncesinde depolama izni istenir |
 
 Dosyalar imzalı değildir. Windows SmartScreen uyarı gösterirse "Ek bilgi" ve ardından "Yine de
-çalıştır" seçilir. Dosyayı güvendiğiniz bir yerden aldığınızdan emin olun ya da programı
-aşağıdaki adımlarla kaynaktan kendiniz derleyin.
+çalıştır" seçilir. macOS uygulaması Apple geliştirici kimliğiyle imzalanmadığı için ilk açılışta
+"doğrulanamadı" uyarısı çıkar: uyarıyı kapatıp **Sistem Ayarları › Gizlilik ve Güvenlik**'te
+"AltyaziIndirici" için **Yine de Aç**'ı seçin (macOS 14 ve öncesinde uygulamaya sağ tıklayıp **Aç**
+da yeterlidir). "Hasarlı" uyarısı çıkarsa Terminal'de
+`xattr -dr com.apple.quarantine /Applications/AltyaziIndirici.app` komutunu bir kez çalıştırın.
+Dosyayı güvendiğiniz bir yerden aldığınızdan emin olun ya da programı aşağıdaki adımlarla kaynaktan
+kendiniz derleyin.
 
 YouTube için bilgisayarda [Deno](https://deno.com) veya Node.js kurulu olması önerilir; yt-dlp
 bazı videolarda bunlardan birine gerek duyar. Android'de bu olanak yoktur, bu yüzden orada bazı
@@ -69,7 +75,7 @@ Kaynak siteler sık değiştiği için program, altyazıları alan yt-dlp'yi ken
   silinir.
 - Programın kendisi kendiliğinden kurulmaz. Bunun yerine açılıştan birkaç saniye sonra, günde en
   fazla bir kez GitHub'daki son sürüme bakılır; yeni sürüm varsa üstte bir bildirim çıkar.
-  **İndir** Windows'ta kurulum dosyasını, Android'de APK'yı indirir, Linux'ta sürüm sayfasını açar.
+  **İndir** Windows'ta kurulum dosyasını, macOS'ta `.dmg`'yi, Android'de APK'yı indirir, Linux'ta sürüm sayfasını açar.
   Yeni sürüm eskisinin üzerine kurulur, ayarlar korunur. Bildirim **Ayarlar > Yeni sürümleri
   bildir** ile kapatılabilir. (1.0.0 sürümünde bu bildirim yoktur.)
 
@@ -90,7 +96,7 @@ Kaynak siteler sık değiştiği için program, altyazıları alan yt-dlp'yi ken
 - Arayüz ile motor aynı bilgisayarda, yalnızca `127.0.0.1` üzerinden ve her açılışta yeniden
   üretilen bir anahtarla konuşur; ağdaki başka cihazlar erişemez.
 - Ayarlar ve indirilenler listesi yalnızca kendi cihazınızda tutulur: Windows'ta
-  `%APPDATA%\AltyaziIndirici`, Linux'ta `~/.config/AltyaziIndirici`, Android'de uygulamanın kendi
+  `%APPDATA%\AltyaziIndirici`, macOS'ta `~/Library/Application Support/AltyaziIndirici`, Linux'ta `~/.config/AltyaziIndirici`, Android'de uygulamanın kendi
   alanı. Masaüstünde programı kaldırdıktan sonra bu klasörü silebilirsiniz.
 - Android uygulaması internet izni ister; Android 11 ve üstünde dosyaları izin istemeden İndirilenler
   klasörüne yazar ve başka dosyalarınıza erişemez.
@@ -116,7 +122,7 @@ Kaynak siteler sık değiştiği için program, altyazıları alan yt-dlp'yi ken
 ## Kaynaktan derleme
 
 Her paket kendi sisteminde derlenir. Depodaki GitHub Actions iş akışı
-(`.github/workflows/build.yml`) üçünü birden derler: Actions sekmesinden elle başlatılır ya da
+(`.github/workflows/build.yml`) dördünü birden derler: Actions sekmesinden elle başlatılır ya da
 `v` ile başlayan bir etiket gönderilince çalışır.
 
 ### Windows
@@ -147,6 +153,24 @@ Paket, derlendiği sistemden eski dağıtımlarda açılmaz (glibc sürümü). D
 Çıktı `dist` klasöründe `AltyaziIndirici_<sürüm>_linux.deb` ve `AltyaziIndirici_<sürüm>_linux.AppImage`
 olarak oluşur.
 
+### macOS
+
+Bir Mac'te (ya da GitHub Actions'ın macOS makinesinde) derlenir. Paket universal'dır: tek `.dmg`
+hem Apple Silicon hem Intel Mac'lerde çalışır. Bunun için python.org'daki macOS kurulumuyla gelen
+iki mimarili (universal2) Python 3.11, Rust'ın iki hedefi ve Node.js gerekir:
+
+```bash
+rustup target add aarch64-apple-darwin x86_64-apple-darwin
+PYTHON=/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 ./build_macos.sh
+```
+
+Betik, derlenmiş kod içeren Python paketlerini universal2 sürümleriyle değiştirir
+(`tools/mac_universal_wheels.py`), motoru `--target-arch universal2` ile paketler ve Tauri'yi
+`universal-apple-darwin` hedefiyle derler. Çıktı `dist/AltyaziIndirici_<sürüm>_macos.dmg` olur.
+Uygulama yerel (ad-hoc) imzalıdır; Apple Developer hesabıyla imzalanıp onaylatılırsa (notarization)
+ilk açılış uyarısı kalkar. Mac simgesi (`src-tauri/icons/icon.icns`) `tools/make_mac_icon.py` ile
+üretilir (numpy gerekir).
+
 ### Android
 
 JDK 17+, Android SDK (platform 35) ve Python 3.11 gerekir. Python uygulamaya
@@ -170,7 +194,7 @@ derlemenin çalıştığını sınamak içindir, yayımlanmamalıdır. `versionC
 
 ### Derlemeden deneme
 
-Windows ve Linux betikleri, derleyicinin programa gömdüğü kaynak yollarındaki kullanıcı klasörünü
+Masaüstü derleme betikleri, derleyicinin programa gömdüğü kaynak yollarındaki kullanıcı klasörünü
 `~` ile değiştirir; böylece derleyenin kullanıcı adı dağıtılan dosyalara girmez.
 
 Arayüzü derlemeden denemek için motor tek başına çalıştırılabilir; arayüz varsayılan
@@ -203,7 +227,7 @@ aynı arayüz bir web görünümünde gösterilir.
 | `src/altyazi/server.py` | Yalnızca 127.0.0.1'e açık, anahtarlı yerel API |
 | `src/altyazi/main.py` | Motorun masaüstü girişi: yerel sunucuyu başlatır |
 | `src/altyazi/android.py` | Motorun Android girişi |
-| `src-tauri/` | Tauri kabuğu (Windows, Linux): pencereyi ve klasör seçiciyi sağlar |
+| `src-tauri/` | Tauri kabuğu (Windows, macOS, Linux): pencereyi ve klasör seçiciyi sağlar |
 | `android/` | Android uygulaması: web görünümü, pano ve "Paylaş" ile gelen bağlantılar |
 | `src/altyazi/web/` | Arayüz (Vue 2, Vuetify 2, Vuex, vue-router, vue-i18n, axios) |
 | `src/altyazi/web/themes.js` | Renk temaları; yeni tema `server.py` içindeki `THEMES` kümesine de eklenir |

@@ -21,6 +21,7 @@ def github_reply(tag="v1.0.1", **extra):
             {"name": f"AltyaziIndirici_{tag[1:]}_windows.exe", "browser_download_url": f"{REPO}/releases/download/{tag}/w.exe"},
             {"name": f"AltyaziIndirici_{tag[1:]}_android.apk", "browser_download_url": f"{REPO}/releases/download/{tag}/a.apk"},
             {"name": f"AltyaziIndirici_{tag[1:]}_linux.deb", "browser_download_url": f"{REPO}/releases/download/{tag}/l.deb"},
+            {"name": f"AltyaziIndirici_{tag[1:]}_macos.dmg", "browser_download_url": f"{REPO}/releases/download/{tag}/m.dmg"},
         ],
     }
     data.update(extra)
@@ -40,6 +41,12 @@ class ReadReleaseTests(unittest.TestCase):
     def test_platform_asset_is_picked(self):
         self.assertTrue(release.read_release(github_reply(), "windows")["download"].endswith("/w.exe"))
         self.assertTrue(release.read_release(github_reply(), "android")["download"].endswith("/a.apk"))
+        self.assertTrue(release.read_release(github_reply(), "macos")["download"].endswith("/m.dmg"))
+
+    def test_macos_without_dmg_gets_the_release_page(self):
+        data = github_reply()
+        data["assets"] = [a for a in data["assets"] if not a["name"].endswith(".dmg")]
+        self.assertEqual(release.read_release(data, "macos")["download"], f"{REPO}/releases/tag/v1.0.1")
 
     def test_linux_gets_the_release_page(self):
         info = release.read_release(github_reply(), "linux")

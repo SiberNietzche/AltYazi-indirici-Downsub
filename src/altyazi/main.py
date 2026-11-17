@@ -12,7 +12,22 @@ import sys
 import threading
 import webbrowser
 
-from . import release, updater
+from . import release, system, updater
+
+
+def _extend_path() -> None:
+    """macOS'ta Finder'dan açılan programın PATH'i Homebrew klasörlerini içermez.
+
+    yt-dlp bazı YouTube videolarında Deno ya da Node.js arar; kullanıcı bunları Homebrew ile
+    kurduysa bulunabilsinler diye o klasörler PATH'in sonuna eklenir.
+    """
+    if system.PLATFORM != "macos":
+        return
+    parts = os.environ.get("PATH", "").split(os.pathsep)
+    for folder in ("/opt/homebrew/bin", "/usr/local/bin"):
+        if folder not in parts:
+            parts.append(folder)
+    os.environ["PATH"] = os.pathsep.join(part for part in parts if part)
 
 
 def _guard_streams() -> None:
@@ -38,7 +53,8 @@ def _exit_when_stdin_closes() -> None:
 def main() -> int:
     stdin = sys.stdin  # _guard_streams öncesi: pencereli exe'de None olabilir
     _guard_streams()
-    parser = argparse.ArgumentParser(prog="altyazi-server")
+    _extend_path()
+    parser =argparse.ArgumentParser(prog="altyazi-server")
     parser.add_argument("--serve", action="store_true", help="Tarayıcı açmadan yalnızca yerel sunucuyu çalıştırır")
     parser.add_argument("--exit-with-stdin", action="store_true", help="Standart girdi kapanınca sunucuyu kapatır (Tauri kabuğu kullanır)")
     parser.add_argument("--port", type=int, default=0)

@@ -460,7 +460,7 @@ window.APP_MESSAGES = {
   },
 };
 
-// Çöp kutusunun adı işletim sistemine göre değişir; metinler Windows adıyla yazılmıştır.
+// Çöp kutusunun ve dosya yöneticisinin adı işletim sistemine göre değişir; metinler Windows adıyla yazılmıştır.
 (function () {
   if (/Windows/.test(navigator.userAgent)) return;
   if (window.AndroidHost || /Android/.test(navigator.userAgent)) {
@@ -503,7 +503,12 @@ window.APP_MESSAGES = {
     });
     return;
   }
-  const names = [['Geri Dönüşüm Kutusu', 'Çöp Kutusu'], ['Recycle Bin', 'Trash']];
+  const mac = /Macintosh|Mac OS X/.test(navigator.userAgent);
+  const names = mac
+    ? [["Geri Dönüşüm Kutusu'na", "Çöp Sepeti'ne"], ['Geri Dönüşüm Kutusu', 'Çöp Sepeti'], ['Recycle Bin', 'Trash'],
+      ['Windows klasöründe', "Finder'da"], ['di peldanka Windowsê de', 'di Finderê de'], ['in its Windows folder', 'in Finder']]
+    : [['Geri Dönüşüm Kutusu', 'Çöp Kutusu'], ['Recycle Bin', 'Trash'],
+      ['Windows klasöründe', 'dosya yöneticisinde'], ['di peldanka Windowsê de', 'di rêvebirê pelan de'], ['in its Windows folder', 'in the file manager']];
   const rename = (node) => {
     Object.keys(node).forEach((key) => {
       if (typeof node[key] === 'string') names.forEach(([from, to]) => { node[key] = node[key].split(from).join(to); });

@@ -1,6 +1,6 @@
 """İşletim sistemine bağlı işler: klasör yerleri, çöp kutusu ve dosya yöneticisi.
 
-Desteklenen ortamlar: Windows, Linux ve Android. Android'de program bir uygulamanın içinde
+Desteklenen ortamlar: Windows, macOS, Linux ve Android. Android'de program bir uygulamanın içinde
 çalışır; uygulama klasörleri ``ALTYAZI_DATA_DIR`` ve ``ALTYAZI_DOWNLOAD_DIR`` ortam
 değişkenleriyle verir, çöp kutusu ve dosya yöneticisi yoktur.
 """
@@ -21,7 +21,9 @@ from . import APP_DIR_NAME
 def platform_name() -> str:
     if hasattr(sys, "getandroidapilevel") or os.environ.get("ALTYAZI_PLATFORM") == "android":
         return "android"
-    return "windows" if sys.platform == "win32" else "linux"
+    if sys.platform == "win32":
+        return "windows"
+    return "macos" if sys.platform == "darwin" else "linux"
 
 
 PLATFORM = platform_name()
@@ -37,6 +39,8 @@ def data_dir() -> Path:
         return Path(override)
     if PLATFORM == "windows":
         return Path(os.environ.get("APPDATA") or Path.home()) / APP_DIR_NAME
+    if PLATFORM == "macos":
+        return Path.home() / "Library" / "Application Support" / APP_DIR_NAME
     return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / APP_DIR_NAME
 
 
@@ -66,7 +70,36 @@ def move_to_trash(path: str) -> bool:
         except OSError:
             return False
         return True
+    if PLATFORM == "macos":
+        return _trash_macos(path)
     return _trash_linux(path)
+
+
+def _trash_macos(path: str) -> bool:
+    """Dosyayı Finder'a Çöp Sepeti'ne attırır; böylece Finder'daki "Geri Koy" da çalışır.
+
+    Finder'ı yönetme izni verilmezse dosya ~/.Trash klasörüne taşınır (aynı diskteyse).
+    """
+    script = 'on run argv\ntell application "Finder" to delete (POSIX file (item 1 of argv) as alias)\nend run'
+    try:
+        done = subprocess.run(["osascript", "-e", script, str(Path(path).absolute())], capture_output=True, timeout=30).returncode == 0
+        if done and not os.path.exists(path):
+            return True
+    except (OSError, subprocess.SubprocessError):
+        pass
+    source = Path(path).absolute()
+    trash = Path.home() / ".Trash"
+    counter = 0
+    while True:
+        target = trash / (source.name if not counter else f"{source.stem} ({counter}){source.suffix}")
+        if not target.exists():
+            break
+        counter += 1
+    try:
+        os.rename(source, target)
+    except OSError:
+        return False
+    return not source.exists()
 
 
 def _trash_windows(path: str) -> bool:
@@ -148,6 +181,16 @@ def reveal(path: Path) -> None:
         else:
             path.mkdir(parents=True, exist_ok=True)
             os.startfile(path)  # noqa: S606 - yalnızca uygulamanın indirme klasörü
+        return
+    if PLATFORM == "macos":
+        if not path.is_file():
+            path.mkdir(parents=True, exist_ok=True)
+        # "open -R" dosyayı Finder'da seçili gösterir; klasör verilirse klasörü açar.
+        command = ["open", "-R", str(path)] if path.is_file() else ["open", str(path)]
+        try:
+            subprocess.Popen(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError:
+            pass
         return
     folder = path.parent if path.is_file() else path
     folder.mkdir(parents=True, exist_ok=True)

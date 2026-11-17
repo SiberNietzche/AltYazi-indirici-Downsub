@@ -1,4 +1,4 @@
-# Windows, Linux ve Android paketlerini derler. Elle (Actions > Derleme > Run workflow) ya da
+# Windows, macOS, Linux ve Android paketlerini derler. Elle (Actions > Derleme > Run workflow) ya da
 # "v" ile başlayan bir etiket gönderilince çalışır; çıktılar çalışmanın "Artifacts" bölümünde durur.
 name: Derleme
 
@@ -29,6 +29,46 @@ jobs:
         with:
           name: windows
           path: dist/*_windows.exe
+          if-no-files-found: error
+
+  macos:
+    # Apple Silicon makinesinde tek bir universal (arm64 + x86_64) .dmg derlenir.
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      # actions/setup-python yalnızca makinenin mimarisini kurar; universal2 yan süreç için
+      # python.org'un iki mimarili Python'u gerekir.
+      - name: Python 3.11 (universal2)
+        run: |
+          curl -fsSL -o python.pkg https://www.python.org/ftp/python/3.11.9/python-3.11.9-macos11.pkg
+          sudo installer -pkg python.pkg -target /
+          /Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11 -c "import sysconfig; print(sysconfig.get_platform())"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - name: Derle
+        env:
+          PYTHON: /Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11
+        run: ./build_macos.sh
+      # Yan süreç iki mimaride de açılabilmeli: arm64 doğrudan, x86_64 Rosetta ile denenir.
+      - name: Sına (arm64 ve x86_64)
+        run: |
+          app=$(ls -d src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app)
+          server="$app/Contents/MacOS/altyazi-server"
+          lipo -info "$server"
+          codesign --verify --deep --verbose=2 "$app"
+          arch -arm64 "$server" --help
+          if ! arch -x86_64 /usr/bin/true 2>/dev/null; then
+            softwareupdate --install-rosetta --agree-to-license
+          fi
+          arch -x86_64 "$server" --help
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/*_macos.dmg
           if-no-files-found: error
 
   linux:

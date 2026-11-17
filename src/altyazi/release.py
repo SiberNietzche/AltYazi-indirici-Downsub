@@ -2,7 +2,7 @@
 
 Program açıldıktan kısa bir süre sonra, günde en fazla bir kez, GitHub'daki son yayımlanan sürüme
 (releases/latest; taslak ve ön sürümler hariç) bakılır. Daha yeniyse arayüz bir bildirim gösterir;
-indirme ve kurulumu kullanıcı yapar. Windows ve Android'de kurulum dosyası doğrudan, Linux'ta
+indirme ve kurulumu kullanıcı yapar. Windows, macOS ve Android'de kurulum dosyası doğrudan, Linux'ta
 (deb ya da AppImage seçimi kullanıcıya kalır) sürüm sayfası açılır.
 
 Altyazı motorunun (yt-dlp) kendiliğinden güncellenmesi ayrıdır: bkz. updater.
@@ -23,7 +23,7 @@ REPO = "SiberNietzche/AltYazi-indirici-Downsub"
 LATEST = f"https://api.github.com/repos/{REPO}/releases/latest"
 CHECK_EVERY = 24 * 60 * 60
 FIRST_CHECK_DELAY = 10  # Açılışı yavaşlatmasın diye ilk denetim biraz bekler (saniye)
-ASSET_SUFFIX = {"windows": "_windows.exe", "android": "_android.apk"}
+ASSET_SUFFIX = {"windows": "_windows.exe", "macos": "_macos.dmg", "android": "_android.apk"}
 _VERSION = re.compile(r"^v?(\d+(?:\.\d+){0,3})$")
 
 _lock = threading.Lock()
