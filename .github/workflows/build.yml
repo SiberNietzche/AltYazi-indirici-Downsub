@@ -33,7 +33,7 @@ jobs:
 
   macos:
     # Apple Silicon makinesinde tek bir universal (arm64 + x86_64) .dmg derlenir.
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       # actions/setup-python yalnızca makinenin mimarisini kurar; universal2 yan süreç için
