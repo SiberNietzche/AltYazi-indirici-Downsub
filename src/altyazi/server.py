@@ -6,6 +6,7 @@ import json
 import mimetypes
 import os
 import secrets
+import socketserver
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -293,8 +294,23 @@ class Handler(BaseHTTPRequestHandler):
     }
 
 
+class LocalServer(ThreadingHTTPServer):
+    """Yalnızca 127.0.0.1'de dinleyen sunucu.
+
+    ``HTTPServer.server_bind`` adresin tam adını ``socket.getfqdn`` ile sorar. macOS 26'da bu
+    sorgu 35-70 saniye sürebiliyor ve sunucu o süre boyunca dinlemeye başlamıyor; kabuk da
+    motorun açılmadığını sanıyor. Ad hiçbir yerde kullanılmadığı için sorgu atlanır.
+    """
+
+    def server_bind(self) -> None:
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = host
+        self.server_port = port
+
+
 def create_server(context: AppContext, port: int = 0) -> ThreadingHTTPServer:
     handler = type("BoundHandler", (Handler,), {"context": context})
-    server = ThreadingHTTPServer(("127.0.0.1", port), handler)
+    server = LocalServer(("127.0.0.1", port), handler)
     server.daemon_threads = True
     return server
