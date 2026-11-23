@@ -1,28 +1,29 @@
-# Yalnızca mac-test dalında: yayımlanan macOS DMG'sini gerçek Mac makinelerinde açılış testinden geçirir.
+# Yalnızca mac-test dalında: derlenen macOS DMG'sini gerçek Mac makinelerinde açılış testinden geçirir.
 name: Mac açılış testi
 
 on:
   push:
     branches: [mac-test]
-  workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   test:
     strategy:
       fail-fast: false
       matrix:
-        runner: [macos-26]
+        runner: [macos-26, macos-15]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos
+          path: dmg
+          run-id: 45268077401
+          github-token: ${{ github.token }}
       - name: Kur ve sına
         run: bash .github/mac-test.sh
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: sonuc-${{ matrix.runner }}
-          path: sonuc/
