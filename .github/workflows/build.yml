@@ -70,6 +70,14 @@ jobs:
             arch -x86_64 /usr/bin/true 2>/dev/null || softwareupdate --install-rosetta --agree-to-license
             arch -x86_64 "$server" --help
           fi
+          # Motor gerçekten açılmalı: kabuk 60 saniye bekler, burada 30 saniyede yanıt vermesi istenir.
+          (sleep 60 | "$server" --serve --exit-with-stdin --port 8765 --token t) &
+          for i in $(seq 1 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:8765/?token=t" && { echo "motor $i saniyede açıldı"; break; }
+            [ "$i" = 30 ] && { echo "motor 30 saniyede açılmadı"; exit 1; }
+            sleep 1
+          done
+          pkill -f "altyazi-server --serve" || true
       - uses: actions/upload-artifact@v4
         with:
           name: macos
